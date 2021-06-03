@@ -21,3 +21,6 @@
 10，[优化]修复日志滚屏引起的崩溃问题，增强稳定性
 
 11，[新增]网络检测功能，检测网站是否能访问
+
+![image](https://user-images.githubusercontent.com/24836174/120707179-95d4a880-c4ec-11eb-839a-1a99783e3706.png)
+![image](https://user-images.githubusercontent.com/24836174/120707201-9f5e1080-c4ec-11eb-93a0-31afd05083e6.png)
