@@ -35,3 +35,22 @@
 
 11，[新增] 网络检测功能，检测网站是否能访问
 
+效果图
+===========================================================================================
+
+![image](https://user-images.githubusercontent.com/24836174/120846095-3e920f00-c5a4-11eb-89f7-06b7671b47e1.png)
+
+![image](https://user-images.githubusercontent.com/24836174/120846177-55386600-c5a4-11eb-8345-1e07e43388b3.png)
+
+![image](https://user-images.githubusercontent.com/24836174/120846265-726d3480-c5a4-11eb-88b5-af22dbe93bcd.png)
+
+![image](https://user-images.githubusercontent.com/24836174/120846310-82851400-c5a4-11eb-864c-d360d70cb420.png)
+
+![image](https://user-images.githubusercontent.com/24836174/120846347-92045d00-c5a4-11eb-97f1-98a4894c7aff.png)
+
+![image](https://user-images.githubusercontent.com/24836174/120846414-a7798700-c5a4-11eb-9b67-0d74601c1ffa.png)
+
+
+
+
+
