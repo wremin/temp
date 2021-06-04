@@ -1,0 +1,8 @@
+lxml==4.6.1
+baidu_aip==2.2.18.0
+pyquery==1.4.1
+cloudscraper==1.2.58
+requests==2.25.0
+beautifulsoup4==4.9.3
+Pillow==8.2.0
+PyQt5==5.15.4
