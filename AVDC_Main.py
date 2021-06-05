@@ -193,7 +193,7 @@ class MyMAinWindow(QMainWindow, Ui_AVDV):
     def show_version(self):
         self.Ui.textBrowser_log_main.append('[*]' + 'AVDC'.center(80, '='))
         self.Ui.textBrowser_log_main.append('[*]' + ('Version' + self.version).center(80))
-        self.Ui.textBrowser_log_main.append('[*]' + 'Bug fix release by Hermit on 2021.06.05'.center(80))
+        self.Ui.textBrowser_log_main.append('[*]' + 'Bug fix release by Hermit on 2021.06.06'.center(80))
         self.Ui.textBrowser_log_main.append('[*]================================================================================')
 
     # ========================================================================鼠标拖动窗口
