@@ -36,7 +36,7 @@ class MyMAinWindow(QMainWindow, Ui_AVDV):
         self.set_style()
         # 初始化需要的变量
         self.version = '3.963'
-        self.localversion = '20210603'
+        self.localversion = '20210608'
         self.m_drag = False
         self.m_DragPosition = 0
         self.count_claw = 0  # 批量刮削次数
