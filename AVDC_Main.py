@@ -25,6 +25,8 @@ from Function.getHtml import get_html, get_proxies, get_config
 
 class MyMAinWindow(QMainWindow, Ui_AVDV):
     progressBarValue = pyqtSignal(int)  # 进度条信号量
+    main_logs_show = pyqtSignal(str) # 刮削日志信号
+    net_logs_show = pyqtSignal(str) # 网络检测日志信号
 
     def __init__(self, parent=None):
         super(MyMAinWindow, self).__init__(parent)
@@ -34,6 +36,7 @@ class MyMAinWindow(QMainWindow, Ui_AVDV):
         self.set_style()
         # 初始化需要的变量
         self.version = '3.963'
+        self.localversion = '20210603'
         self.m_drag = False
         self.m_DragPosition = 0
         self.count_claw = 0  # 批量刮削次数
@@ -43,7 +46,10 @@ class MyMAinWindow(QMainWindow, Ui_AVDV):
         self.json_array = {}
         self.Init()
         self.Load_Config()
-        self.show_version()
+        self.show_version() # 启动后在【日志】页面显示网络代理情况
+        self.add_net_text_main('\n tips： 代理设置在：【设置】 - 【其他设置】 - 【代理设置】。\n') 
+        self.show_netstatus() # 启动后在【检测网络】页面显示网络代理情况
+        self.add_net_text_main('\n\n\n 点击 【开始检测】以进行网络连通性测试。\n') 
         # ========================================================================打开日志文件
         if self.Ui.radioButton_log_on.isChecked():
             if not os.path.exists('Log'):
@@ -51,10 +57,10 @@ class MyMAinWindow(QMainWindow, Ui_AVDV):
             log_name = 'Log/' + time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime()) + '.txt'
             self.log_txt = open(log_name, "wb", buffering=0)
 
-        self.UpdateCheck()
-        # self.NetCheck()
+        self.UpdateCheck_start() # 检查更新
+
         if self.Ui.radioButton_log_on.isChecked():
-            self.add_text_main('[-]Created log file: ' + log_name)
+            self.add_text_main('[-]' + ('Created log file: ' + log_name).center(80))
             self.add_text_main("[*]================================================================================")
 
     def Init_Ui(self):
@@ -69,6 +75,8 @@ class MyMAinWindow(QMainWindow, Ui_AVDV):
         self.Ui.progressBar_avdc.setValue(0)  # 进度条清0 
         self.progressBarValue.connect(self.set_processbar)
         self.Ui.progressBar_avdc.setTextVisible(False)  # 不显示进度条文字
+        self.main_logs_show.connect(self.Ui.textBrowser_log_main.append)
+        self.net_logs_show.connect(self.Ui.textBrowser_net_main.append)
         self.setWindowFlag(Qt.FramelessWindowHint)  # 隐藏边框
         # self.setWindowOpacity(0.9)  # 设置窗口透明度
         self.setAttribute(Qt.WA_TranslucentBackground)  # 设置窗口背景透明
@@ -193,7 +201,7 @@ class MyMAinWindow(QMainWindow, Ui_AVDV):
     def show_version(self):
         self.Ui.textBrowser_log_main.append('[*]' + 'AVDC'.center(80, '='))
         self.Ui.textBrowser_log_main.append('[*]' + ('Version' + self.version).center(80))
-        self.Ui.textBrowser_log_main.append('[*]' + 'Bug fix release by Hermit on 2021.06.06'.center(80))
+        self.Ui.textBrowser_log_main.append('[*]' + 'Bug fix release by Hermit on {}.{}.{}'.format(self.localversion[:4], self.localversion[4:6], self.localversion[6:]).center(80) )
         self.Ui.textBrowser_log_main.append('[*]================================================================================')
 
     # ========================================================================鼠标拖动窗口
@@ -281,7 +289,6 @@ class MyMAinWindow(QMainWindow, Ui_AVDV):
         self.Ui.pushButton_start_cap2.setEnabled(False)
         self.progressBarValue.emit(int(0))
         try:
-            self.count_claw += 1
             t = threading.Thread(target=self.AVDC_Main)
             t.start()  # 启动线程,即让线程开始执行
         except Exception as error_info:
@@ -308,12 +315,13 @@ class MyMAinWindow(QMainWindow, Ui_AVDV):
             'failed_output_folder': 'failed',
             'success_output_folder': 'JAV_output',
             'type': 'no',
-            'proxy': '127.0.0.1:1080',
-            'timeout': 7,
+            'proxy': '127.0.0.1:6152',
+            'timeout': 10,
             'retry': 3,
             'folder_name': 'actor/number title',
             'naming_media': 'number actor',
             'naming_file': 'number',
+            'folder_name_C': 0,
             'literals': '\()',
             'folders': 'JAV_output',
             'string': '1080p,720p,22-sht.me,-HD',
@@ -401,6 +409,11 @@ class MyMAinWindow(QMainWindow, Ui_AVDV):
             self.Ui.radioButton_update_on.setChecked(True)
         elif int(config['update']['update_check']) == 0:
             self.Ui.radioButton_update_off.setChecked(True)
+        # ========================================================================folder_name_C
+        if int(config['Name_Rule']['folder_name_C']) == 1:
+            self.Ui.radioButton_foldername_C_on.setChecked(True)
+        elif int(config['Name_Rule']['folder_name_C']) == 0:
+            self.Ui.radioButton_foldername_C_off.setChecked(True)
         # ========================================================================log
         if int(config['log']['save_log']) == 1:
             self.Ui.radioButton_log_on.setChecked(True)
@@ -492,6 +505,7 @@ class MyMAinWindow(QMainWindow, Ui_AVDV):
         show_poster = 0
         switch_debug = 0
         update_check = 0
+        folder_name_C = 0
         save_log = 0
         website = ''
         add_mark = 1
@@ -523,6 +537,10 @@ class MyMAinWindow(QMainWindow, Ui_AVDV):
             update_check = 1
         elif self.Ui.radioButton_update_off.isChecked():  # 不检查更新
             update_check = 0
+        if self.Ui.radioButton_foldername_C_on.isChecked():  # 文件夹加-C
+            folder_name_C = 1
+        elif self.Ui.radioButton_foldername_C_off.isChecked():  # 文件夹不加-C
+            folder_name_C = 0
         if self.Ui.radioButton_log_on.isChecked():  # 开启日志
             save_log = 1
         elif self.Ui.radioButton_log_off.isChecked():  # 关闭日志
@@ -613,6 +631,7 @@ class MyMAinWindow(QMainWindow, Ui_AVDV):
             'show_poster': show_poster,
             'failed_file_move': failed_file_move,
             'update_check': update_check,
+            'folder_name_C': folder_name_C,
             'save_log': save_log,
             'website': website,
             'failed_output_folder': self.Ui.lineEdit_fail.text(),
@@ -647,6 +666,7 @@ class MyMAinWindow(QMainWindow, Ui_AVDV):
             'extrafanart_folder': self.Ui.lineEdit_extrafanart_dir.text(),
         }
         save_config(json_config)
+        self.show_netstatus()
 
     # ========================================================================小工具-单视频刮削
     def pushButton_select_file_clicked(self):
@@ -1016,8 +1036,9 @@ class MyMAinWindow(QMainWindow, Ui_AVDV):
             time.sleep(0.1)
             if self.Ui.radioButton_log_on.isChecked():
                 self.log_txt.write((str(text) + '\n').encode('utf8'))
-            self.Ui.textBrowser_log_main.append(str(text))
-            self.Ui.textBrowser_log_main.verticalScrollBar().setValue(self.Ui.textBrowser_log_main.verticalScrollBar().maximum())
+            self.main_logs_show.emit(text)
+            # self.Ui.textBrowser_log_main.append(str(text))
+            # self.Ui.textBrowser_log_main.verticalScrollBar().setValue(self.Ui.textBrowser_log_main.verticalScrollBar().maximum())
             # self.Ui.textBrowser_log_main.moveCursor(QTextCursor.End)
         except Exception as error_info:
             self.Ui.textBrowser_log_main.append('[-]Error in add_text_main' + str(error_info))
@@ -1027,9 +1048,10 @@ class MyMAinWindow(QMainWindow, Ui_AVDV):
     # ========================================================================语句添加到日志框
     def add_net_text_main(self, text):
         try:
-            time.sleep(0.1)
-            self.Ui.textBrowser_net_main.append(text)
-            self.Ui.textBrowser_net_main.verticalScrollBar().setValue(self.Ui.textBrowser_net_main.verticalScrollBar().maximum())
+            # time.sleep(0.1)
+            self.net_logs_show.emit(text)
+            # self.Ui.textBrowser_net_main.append(text)
+            # self.Ui.textBrowser_net_main.verticalScrollBar().setValue(self.Ui.textBrowser_net_main.verticalScrollBar().maximum())
             # self.Ui.textBrowser_net_main.moveCursor(QTextCursor.End)
         except Exception as error_info:
             self.Ui.textBrowser_net_main.append('[-]Error in add_net_text_main' + str(error_info))
@@ -1448,6 +1470,8 @@ class MyMAinWindow(QMainWindow, Ui_AVDV):
         if len(actor.split(',')) >= 10:  # 演员过多取前五个
             actor = actor.split(',')[0] + ',' + actor.split(',')[1] + ',' + actor.split(',')[2] + '等演员'
         folder_name = json_data['folder_name']
+        if config['Name_Rule']['folder_name_C']:
+            c_word = ''
         path = folder_name.replace('title', title).replace('studio', studio).replace('year', year).replace('runtime',
                                                                                                            runtime).replace(
             'director', director).replace('actor', actor).replace('release', release).replace('number', number + c_word).replace(
@@ -1502,33 +1526,73 @@ class MyMAinWindow(QMainWindow, Ui_AVDV):
                 self.Ui.label_thumb.setScaledContents(True)
                 self.Ui.label_thumb.setPixmap(pix)  # 添加缩略图
 
+
+
     # ========================================================================检查更新
     def UpdateCheck(self):
+        new = 0
         if self.Ui.radioButton_update_on.isChecked():
-            self.add_text_main('[!]' + 'Update Checking!'.center(80))
+            self.add_text_main('[!]' + 'Update Checking!'.center(80) )
             html2 = get_html('https://raw.githubusercontent.com/moyy996/AVDC/master/update_check.json')
             if html2 == 'ProxyError':
-                self.add_text_main('[-]UpdateCheck Failed!' + ' The update link (https://raw.githubusercontent.com/moyy996/AVDC/master/update_check.json) connection timeout!' +' Please check your Proxy or Network!')
+                self.add_text_main('[-]' + 'UpdateCheck Failed! Please check your Proxy or Network!'.center(80))
                 self.add_text_main("[*]================================================================================")
-                # self.Ui.pushButton_start_cap.setEnabled(True)
                 return html2
             if html2 == '404: Not Found':
-                self.add_text_main('[-]' + 'UpdateCheck Failed! 404: Not Found!'.center(80))
-                self.add_text_main("[*]================================================================================")
-                # self.Ui.pushButton_start_cap.setEnabled(True)
-                return html2
-            html = json.loads(str(html2))
-            if float(self.version) < float(html['version']):
-                self.add_text_main('[*]' + ('* New update ' + html['version'] + ' *').center(80))
-                self.add_text_main('[*]' + '↓ Download ↓'.center(80))
-                self.add_text_main('[*]' + html['download'].center(80))
+                pass
             else:
+                html = json.loads(str(html2))
+                if float(self.version) < float(html['version']):
+                    new += 1
+                    self.add_text_main('[*]' + ('* New update ' + html['version'] + ' by moyy996 *').center(80))
+                    self.add_text_main('[*]' + '↓ Download ↓'.center(80))
+                    self.add_text_main('[*]' + html['download'].center(80) )                    
+            try:
+                data = json.loads(get_html('https://api.github.com/repos/Hermit10/temp/releases/latest'))
+            except:
+                pass
+            remote = int(data["tag_name"].replace(".",""))
+            localversion = int(self.localversion.replace(".", ""))
+            if localversion < remote:
+                new += 1
+                self.add_text_main('[*]\n' + '[*]' + ('* New update ' + str(data["tag_name"]) + ' by Hermit *').center(80))
+                self.add_text_main('[*]' + '↓ Download ↓'.center(80))
+                self.add_text_main('[*]' + 'https://github.com/Hermit10/temp/releases'.center(80))
+            if not new:
                 self.add_text_main('[!]' + 'No Newer Version Available!'.center(80))
             self.add_text_main("[*]================================================================================")
+
+
         return 'True'
+    def UpdateCheck_start(self):
+        try:
+            # self.count_claw += 1
+            t = threading.Thread(target=self.UpdateCheck)
+            t.start()  # 启动线程,即让线程开始执行
+        except Exception as error_info:
+            self.add_text_main('[-]update check error : ' + str(error_info))     
+
+    def show_netstatus(self):
+        self.add_net_text_main(time.strftime('%Y-%m-%d %H:%M:%S').center(80, '='))
+        proxy_type = ''
+        retry_count = 0
+        proxy = ''
+        timeout = 0
+        try:
+            proxy_type, proxy, timeout, retry_count = get_config()
+        except Exception as error_info:
+            print('[-]get config failed when check net, error info: ! ' + str(error_info))
+        if proxy == '' or proxy_type == '' or proxy_type == 'no':
+            self.add_net_text_main(' 当前网络状态：❌ 未启用代理')
+        else:
+            self.add_net_text_main(' 当前网络状态：✅ 已启用代理\n   类型： ' + proxy_type + '    地址：' + proxy + '    超时时间：' + str(timeout) + '    重试次数：' + str(retry_count) )
+        self.add_net_text_main('='*80)
 
     def NetResult(self):
-        self.add_net_text_main(time.strftime('%Y-%m-%d %H:%M:%S').center(80, '=') + '\n' + ' 检测网络中，请等待...')
+        # 获取代理信息
+        self.show_netstatus()
+        # 检测网络
+        self.add_net_text_main(' 检测网络中，请等待...')
         net_info = [['github', 'https://raw.githubusercontent.com' , ''], ['javbus', 'https://www.javbus.com' , ''], ['javdb', 'https://www.javdb.com', ''], ['jav321', 'https://www.jav321.com' , ''], ['dmm', 'https://www.dmm.co.jp' , ''], ['avsox', 'https://avsox.website' , ''], ['xcity', 'https://xcity.jp' , ''], ['mgstage', 'https://www.mgstage.com', '']]
         for each in net_info:
             error_info = '连接失败，请检查网络或代理设置！'
@@ -1547,18 +1611,18 @@ class MyMAinWindow(QMainWindow, Ui_AVDV):
             else:
                 each[2] = '✅ 连接正常'
             self.add_net_text_main('   ' + each[0].ljust(8) + each[2])
-        self.add_net_text_main("================================================================================")
+        self.add_net_text_main("================================================================================\n")
         self.Ui.pushButton_check_net.setEnabled(True)
 
     # ========================================================================网络检查
     def NetCheck(self):
         self.Ui.pushButton_check_net.setEnabled(False)
         try:
-            self.count_claw += 1
+            # self.count_claw += 1
             t = threading.Thread(target=self.NetResult)
             t.start()  # 启动线程,即让线程开始执行
         except Exception as error_info:
-            self.add_text_main('[-]Error in pushButton_check_net_clicked: ' + str(error_info))        
+            self.add_net_text_main('[-]Error in NetCheck: ' + str(error_info))        
 
 
     # ========================================================================新建失败输出文件夹
@@ -1617,10 +1681,10 @@ class MyMAinWindow(QMainWindow, Ui_AVDV):
             self.moveFailedFolder(filepath, failed_folder)
             
             if json_data['website'] == 'SearchCloudFlare':
-                self.add_text_main('[-]失败！javdb搜索结果被CloudFlare 5秒盾拦截！请重试几次可能就成功了！')
+                self.add_text_main('[-]失败！javdb 搜索结果被 CloudFlare 5秒盾拦截！请重试几次可能就成功了！')
                 return 'not found'
             elif json_data['website'] == 'DetailCloudFlare':
-                self.add_text_main('[-]失败！javdb详情页被CloudFlare 5秒盾拦截！请重试几次可能就成功了！')
+                self.add_text_main('[-]失败！javdb 详情页被 CloudFlare 5秒盾拦截！请重试几次可能就成功了！')
                 return 'not found'
             else:
                 self.add_text_main('[-]Movie Data not found!')
@@ -1719,8 +1783,10 @@ class MyMAinWindow(QMainWindow, Ui_AVDV):
         self.add_text_main('[+]Find ' + count_all + ' movies')
         if config['common']['soft_link'] == '1':
             self.add_text_main('[!] --- Soft link mode is ENABLE! ----')
-        if count_all == 0:
+        if int(count_all) == 0:
             self.progressBarValue.emit(int(100))
+        else:
+            self.count_claw += 1
         # =======================================================================遍历电影列表 交给core处理
         for movie in movie_list:  # 遍历电影列表 交给core处理
             count += 1
@@ -1728,7 +1794,7 @@ class MyMAinWindow(QMainWindow, Ui_AVDV):
             percentage = str(count / int(count_all) * 100)[:4] + '%'
             value = int(count / int(count_all) * 100)
             self.add_text_main(
-                '[!] - ' + str(self.count_claw) + ' - ' + percentage + ' - [' + str(count) + '/' + count_all + '] -')
+                '[!] - ' + str(self.count_claw) + ' - ' + percentage + ' - [' + str(count) + '/' + count_all + ']')
             try:
                 movie_number = getNumber(movie, escape_string)
                 self.add_text_main("[!]Making Data for   [" + movie + "], the number is [" + movie_number + "]")
