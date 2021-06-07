@@ -332,6 +332,7 @@ def save_config(json_config):
         print("folder_name = " + json_config['folder_name'], file=code)
         print("naming_media = " + json_config['naming_media'], file=code)
         print("naming_file = " + json_config['naming_file'], file=code)
+        print("folder_name_C = " + str(json_config['folder_name_C']), file=code)
         print("", file=code)
         print("[update]", file=code)
         print("update_check = " + str(json_config['update_check']), file=code)

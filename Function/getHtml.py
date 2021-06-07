@@ -39,12 +39,10 @@ def get_html(url, cookies=None):
     timeout = 0
     try:
         proxy_type, proxy, timeout, retry_count = get_config()
-        print(proxy_type, proxy, timeout, retry_count)
     except Exception as error_info:
         print('Error in get_html :' + str(error_info))
         print('[-]Proxy config error! Please check the config.')
     proxies = get_proxies(proxy_type, proxy)
-
     i = 0
     while i < retry_count:
         try:
@@ -53,7 +51,6 @@ def get_html(url, cookies=None):
                               'Chrome/60.0.3100.0 Safari/537.36'}
             getweb = requests.get(str(url), headers=headers, timeout=timeout, proxies=proxies, cookies=cookies)
             getweb.encoding = 'utf-8'
-
             return getweb.text
         except Exception as error_info:
             i += 1
