@@ -868,7 +868,7 @@ class Ui_AVDV(object):
 
     def retranslateUi(self, AVDV):
         _translate = QtCore.QCoreApplication.translate
-        AVDV.setWindowTitle(_translate("AVDV", "AVDC-3.963"))
+        AVDV.setWindowTitle(_translate("AVDV", "AVDC - 2021"))
         self.pushButton_start_cap.setText(_translate("AVDV", "开始"))
         self.pushButton_start_cap2.setText(_translate("AVDV", "开始"))
 #         self.textBrowser_warning.setHtml(_translate("AVDV", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
