@@ -215,7 +215,7 @@ class Ui_AVDV(object):
         self.comboBox_website.addItem("")
         self.comboBox_website.addItem("")
         self.comboBox_website.addItem("")
-        # self.comboBox_website.addItem("")
+        self.comboBox_website.addItem("")
         self.label_2 = QtWidgets.QLabel(self.groupBox_7)
         self.label_2.setGeometry(QtCore.QRect(230, 90, 72, 21))
         self.label_2.setObjectName("label_2")
@@ -429,7 +429,7 @@ class Ui_AVDV(object):
         self.comboBox_website_all.addItem("")
         self.comboBox_website_all.addItem("")
         self.comboBox_website_all.addItem("")
-        # self.comboBox_website_all.addItem("")
+        self.comboBox_website_all.addItem("")
         self.groupBox_24 = QtWidgets.QGroupBox(self.tab)
         self.groupBox_24.setGeometry(QtCore.QRect(10, 400, 761, 61))
         self.groupBox_24.setObjectName("groupBox_24")
@@ -868,7 +868,7 @@ class Ui_AVDV(object):
 
     def retranslateUi(self, AVDV):
         _translate = QtCore.QCoreApplication.translate
-        AVDV.setWindowTitle(_translate("AVDV", "AVDC - 2021"))
+        AVDV.setWindowTitle(_translate("AVDV", "AVDC"))
         self.pushButton_start_cap.setText(_translate("AVDV", "开始"))
         self.pushButton_start_cap2.setText(_translate("AVDV", "开始"))
 #         self.textBrowser_warning.setHtml(_translate("AVDV", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
@@ -917,6 +917,7 @@ class Ui_AVDV(object):
         self.comboBox_website.setItemText(5, _translate("AVDV", "avsox"))
         self.comboBox_website.setItemText(6, _translate("AVDV", "xcity"))
         self.comboBox_website.setItemText(7, _translate("AVDV", "mgstage"))
+        self.comboBox_website.setItemText(8, _translate("AVDV", "fc2hub"))
         self.label_2.setText(_translate("AVDV", "刮削网站:"))
         self.label_10.setText(_translate("AVDV", "刮削网址："))
         self.label_12.setText(_translate("AVDV", "影片番号："))
@@ -978,6 +979,7 @@ class Ui_AVDV(object):
         self.comboBox_website_all.setItemText(5, _translate("AVDV", "avsox"))
         self.comboBox_website_all.setItemText(6, _translate("AVDV", "xcity"))
         self.comboBox_website_all.setItemText(7, _translate("AVDV", "mgstage"))
+        self.comboBox_website_all.setItemText(8, _translate("AVDV", "fc2hub"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab), _translate("AVDV", "普通设置"))
         self.groupBox_8.setTitle(_translate("AVDV", "命名规则"))
         self.label_43.setText(_translate("AVDV", "目录命名：       "))
