@@ -5,7 +5,7 @@ import os
 import json
 from PIL import Image
 from configparser import ConfigParser
-from Getter import avsox, javbus, javdb, fc2fans_club, mgstage, dmm, jav321, xcity
+from Getter import avsox, javbus, javdb, fc2hub, mgstage, dmm, jav321, xcity
 
 
 # ========================================================================获取config
@@ -34,6 +34,7 @@ def is_uncensored(number):
 
 # ========================================================================元数据获取失败检测
 def getDataState(json_data):
+    # print(json_data)
     if json_data['title'] == '' or json_data['title'] == 'None' or json_data['title'] == 'null':
         return 0
     else:
@@ -162,9 +163,9 @@ def getDataFromJSON(file_number, config, mode, appoint_url):  # 从JSON返回元
                 json_data = json.loads(javbus.main(file_number, appoint_url))
         # =======================================================================FC2-111111
         elif 'FC2' in file_number.upper():
-            # json_data = json.loads(fc2fans_club.main(re.search('\d{4,}', file_number).group(), appoint_url))
-            # if getDataState(json_data) == 0:
-            json_data = json.loads(javdb.main(file_number, appoint_url))
+            json_data = json.loads(fc2hub.main(re.search('\d{4,}', file_number).group(), appoint_url))
+            if getDataState(json_data) == 0:
+                json_data = json.loads(javdb.main(file_number, appoint_url))
         # =======================================================================ssni00321
         elif re.match('\D{2,}00\d{3,}', file_number) and '-' not in file_number and '_' not in file_number:
             json_data = json.loads(dmm.main(file_number, appoint_url))
@@ -212,8 +213,8 @@ def getDataFromJSON(file_number, config, mode, appoint_url):  # 从JSON返回元
         json_data = json.loads(xcity.main(file_number, appoint_url))
     elif mode == 8:  # 仅从mgstage
         json_data = json.loads(mgstage.main(file_number, appoint_url))
-    # elif mode == 9:  # 仅从fc2club
-    #     json_data = json.loads(fc2fans_club.main(file_number, appoint_url))
+    elif mode == 9:  # 仅从fc2hub
+        json_data = json.loads(fc2hub.main(file_number, appoint_url))
 
     # ================================================网站规则添加结束================================================
     # print(json_data)
@@ -319,7 +320,7 @@ def save_config(json_config):
         print("soft_link = " + str(json_config['soft_link']), file=code)
         print("show_poster = " + str(json_config['show_poster']), file=code)
         print("website = " + json_config['website'], file=code)
-        print("# all or mgstage or fc2club or javbus or jav321 or javdb or avsox or xcity or dmm", file=code)
+        print("# all or mgstage or fc2hub or javbus or jav321 or javdb or avsox or xcity or dmm", file=code)
         print("", file=code)
         print("[proxy]", file=code)
         print("type = " + json_config['type'], file=code)
@@ -382,7 +383,7 @@ def save_config(json_config):
         print("extrafanart_download = " + str(json_config['extrafanart_download']), file=code)
         print("extrafanart_folder = " + str(json_config['extrafanart_folder']), file=code)
 
-    code.close()
+    # code.close()
 
 
 def check_pic(path_pic):
