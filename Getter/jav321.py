@@ -81,8 +81,7 @@ def getExtraFanart(htmlcode):
 
 
 def getCoverSmall(detail_page):
-    return str(detail_page.xpath("//div[@class='panel-body']/div[@class='row'][1]/div[@class='col-md-3']/img["
-                                 "@class='img-responsive']/@src")).strip(" ['']")
+    return str(detail_page.xpath('//img[@class="img-responsive"]/@src')[0])
 
 
 def getTag(response):  # 获取演员
@@ -93,7 +92,7 @@ def getOutline(detail_page):
     return str(detail_page.xpath('/html/body/div[2]/div[1]/div[1]/div[2]/div[3]/div/text()')).strip(" ['']")
 
 
-def main(number, appoint_url, isuncensored=False):
+def main(number, appoint_url='', isuncensored=False):
     try:
         result_url = "https://www.jav321.com/search"
         if appoint_url != '':
@@ -108,11 +107,15 @@ def main(number, appoint_url, isuncensored=False):
         actor = getActor(response)
         imagecut = 1
         cover_small = ''
+        cover = getCover(detail_page)
+        cover_small = getCoverSmall(detail_page)
         if 'HEYZO' in number.upper() or isuncensored:
             imagecut = 3
-            cover_small = getCoverSmall(detail_page)
             if cover_small == '':
                 imagecut = 0
+        if not cover:
+            cover = cover_small
+        
         dic = {
             'actor': actor,
             'title': getTitle(response),
@@ -126,7 +129,7 @@ def main(number, appoint_url, isuncensored=False):
             'series': getSeries(response),
             'year': getYear(release),
             'actor_photo': getActorPhoto(actor.split(',')),
-            'cover': getCover(detail_page),
+            'cover': cover,
             'extrafanart': getExtraFanart(detail_page),
             'cover_small': cover_small,
             'imagecut': imagecut,
@@ -149,6 +152,9 @@ def main(number, appoint_url, isuncensored=False):
     js = json.dumps(dic, ensure_ascii=False, sort_keys=True, indent=4, separators=(',', ':'), )  # .encode('UTF-8')
     return js
 
+
+# print(main('GERK-326'))
+# print(main('msfh-010'))
 
 '''
 print(main('msfh-010'))

@@ -111,7 +111,11 @@ def getDirector(html):
 def getScore(html):
     result = str(html.xpath("//span[@class='score-stars']/../text()")).strip(" ['']")
     try:
-        score = re.findall(r'(\d{1}\..+)分', result)[0]
+        score = re.findall(r'(\d{1}\..+)分', result)
+        if score:
+            score = score[0]
+        else:
+            score = ''
     except:
         score = ''
     return score
