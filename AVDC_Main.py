@@ -35,8 +35,8 @@ class MyMAinWindow(QMainWindow, Ui_AVDV):
         self.Init_Ui()
         self.set_style()
         # 初始化需要的变量
-        self.version = '3.963'
-        self.localversion = '20210608'
+        # self.version = '3.963'
+        self.localversion = '20210609'
         self.m_drag = False
         self.m_DragPosition = 0
         self.count_claw = 0  # 批量刮削次数
@@ -49,7 +49,7 @@ class MyMAinWindow(QMainWindow, Ui_AVDV):
         self.show_version() # 启动后在【日志】页面显示网络代理情况
         self.add_net_text_main('\n tips： 代理设置在：【设置】 - 【其他设置】 - 【代理设置】。\n') 
         self.show_netstatus() # 启动后在【检测网络】页面显示网络代理情况
-        self.add_net_text_main('\n\n\n 点击 【开始检测】以进行网络连通性测试。\n') 
+        self.add_net_text_main('\n\n\n 点击 【开始检测】以测试网络连通性。\n') 
         # ========================================================================打开日志文件
         if self.Ui.radioButton_log_on.isChecked():
             if not os.path.exists('Log'):
@@ -200,8 +200,8 @@ class MyMAinWindow(QMainWindow, Ui_AVDV):
     # ========================================================================显示版本号
     def show_version(self):
         self.Ui.textBrowser_log_main.append('[*]' + 'AVDC'.center(80, '='))
-        self.Ui.textBrowser_log_main.append('[*]' + ('Version' + self.version).center(80))
-        self.Ui.textBrowser_log_main.append('[*]' + 'Bug fix release by Hermit on {}.{}.{}'.format(self.localversion[:4], self.localversion[4:6], self.localversion[6:]).center(80) )
+        self.Ui.textBrowser_log_main.append('[*]' + ('Current Version: ' + self.localversion).center(80))
+        self.Ui.textBrowser_log_main.append('[*]' + '基于项目 https://github.com/moyy996/AVDC 修改'.center(80))
         self.Ui.textBrowser_log_main.append('[*]================================================================================')
 
     # ========================================================================鼠标拖动窗口
@@ -315,11 +315,11 @@ class MyMAinWindow(QMainWindow, Ui_AVDV):
             'failed_output_folder': 'failed',
             'success_output_folder': 'JAV_output',
             'type': 'no',
-            'proxy': '127.0.0.1:6152',
+            'proxy': '127.0.0.1:7890',
             'timeout': 10,
             'retry': 3,
-            'folder_name': 'actor/number title',
-            'naming_media': 'number actor',
+            'folder_name': 'actor/number actor',
+            'naming_media': 'number title',
             'naming_file': 'number',
             'folder_name_C': 0,
             'literals': '\()',
@@ -387,6 +387,8 @@ class MyMAinWindow(QMainWindow, Ui_AVDV):
             self.Ui.comboBox_website_all.setCurrentIndex(6)
         elif config['common']['website'] == 'mgstage':
             self.Ui.comboBox_website_all.setCurrentIndex(7)
+        elif config['common']['website'] == 'fc2hub':
+            self.Ui.comboBox_website_all.setCurrentIndex(8)
 
         self.Ui.lineEdit_success.setText(config['common']['success_output_folder'])
         self.Ui.lineEdit_fail.setText(config['common']['failed_output_folder'])
@@ -569,6 +571,8 @@ class MyMAinWindow(QMainWindow, Ui_AVDV):
             website = 'xcity'
         elif self.Ui.comboBox_website_all.currentText() == 'mgstage':  # mgstage
             website = 'mgstage'
+        elif self.Ui.comboBox_website_all.currentText() == 'fc2hub':  # fc2hub
+            website = 'fc2hub'
         # ========================================================================proxy
         if self.Ui.radioButton_proxy_http.isChecked():  # http proxy
             proxy_type = 'http'
@@ -769,20 +773,17 @@ class MyMAinWindow(QMainWindow, Ui_AVDV):
         if height / width <= 1.5:  # 长宽比大于1.5，太宽
             """ 调用人体检测与属性识别 """
             result = client.bodyAnalysis(image)
-            print(result)
             ewidth = int(height / 1.5)
 
             try:
                 ex = int(result["person_info"][0]['body_parts']['nose']['x'])
             except:
                 ex = int(width / 4)
-                print(ex)
 
             if width - ex < ewidth / 2:
                 ex = width - ewidth
             else:
                 ex -= int(ewidth / 2)
-            print(ex)
             if ex < 0:
                 ex = 0
             ey = 0
@@ -798,6 +799,7 @@ class MyMAinWindow(QMainWindow, Ui_AVDV):
             eh = ew * 1.5
         fp = open(file_path, 'rb')
         img = Image.open(fp)
+        img = img.convert('RGB')
         img_new_png = img.crop((ex, ey, ew + ex, eh + ey))
         fp.close()
         img_new_png.save(png_path)
@@ -1348,9 +1350,10 @@ class MyMAinWindow(QMainWindow, Ui_AVDV):
             else:
                 try:
                     img = Image.open(path + '/' + thumb_name)
-                    w = img.width
-                    h = img.height
-                    img2 = img.crop((w / 1.9, 0, w, h))
+                    img1 = img.convert('RGB')
+                    w = img1.width
+                    h = img1.height
+                    img2 = img1.crop((w / 1.9, 0, w, h))
                     img2.save(path + '/' + poster_name)
                     self.add_text_main('[+]Poster Cut!        ' + poster_name)
                 except:
@@ -1533,35 +1536,35 @@ class MyMAinWindow(QMainWindow, Ui_AVDV):
         new = 0
         if self.Ui.radioButton_update_on.isChecked():
             self.add_text_main('[!]' + 'Update Checking!'.center(80) )
-            html2 = get_html('https://raw.githubusercontent.com/moyy996/AVDC/master/update_check.json')
-            if html2 == 'ProxyError':
-                self.add_text_main('[-]' + 'UpdateCheck Failed! Please check your Proxy or Network!'.center(80))
-                self.add_text_main("[*]================================================================================")
-                return html2
-            if html2 == '404: Not Found':
-                pass
-            else:
-                html = json.loads(str(html2))
-                if float(self.version) < float(html['version']):
-                    new += 1
-                    self.add_text_main('[*]' + ('* New update ' + html['version'] + ' by moyy996 *').center(80))
-                    self.add_text_main('[*]' + '↓ Download ↓'.center(80))
-                    self.add_text_main('[*]' + html['download'].center(80) )                    
+            # html2 = get_html('https://raw.githubusercontent.com/moyy996/AVDC/master/update_check.json')
+            # if html2 == 'ProxyError':
+            #     self.add_text_main('[-]' + 'UpdateCheck Failed! Please check your Proxy or Network!'.center(80))
+            #     self.add_text_main("[*]================================================================================")
+            #     return html2
+            # if html2 == '404: Not Found':
+            #     pass
+            # else:
+            #     html = json.loads(str(html2))
+            #     if float(self.version) < float(html['version']):
+            #         new += 1
+            #         self.add_text_main('[*]' + ('* New update ' + html['version'] + ' by moyy996 *').center(80))
+            #         self.add_text_main('[*]' + '↓ Download ↓'.center(80))
+            #         self.add_text_main('[*]' + html['download'].center(80) )                    
             try:
                 data = json.loads(get_html('https://api.github.com/repos/Hermit10/temp/releases/latest'))
-            except:
-                pass
+            except Exception as errorinfo:
+                self.add_text_main('[!]' + ('UpdateCheck Failed! Error info: ' + errorinfo).center(80))
+                return
             remote = int(data["tag_name"].replace(".",""))
             localversion = int(self.localversion.replace(".", ""))
             if localversion < remote:
                 new += 1
-                self.add_text_main('[*]\n' + '[*]' + ('* New update ' + str(data["tag_name"]) + ' by Hermit *').center(80))
+                self.add_text_main('[*]' + ('* New update ' + str(data["tag_name"]) + ' is Available *').center(80))
                 self.add_text_main('[*]' + '↓ Download ↓'.center(80))
                 self.add_text_main('[*]' + 'https://github.com/Hermit10/temp/releases'.center(80))
             if not new:
                 self.add_text_main('[!]' + 'No Newer Version Available!'.center(80))
             self.add_text_main("[*]================================================================================")
-
 
         return 'True'
     def UpdateCheck_start(self):
@@ -1593,7 +1596,7 @@ class MyMAinWindow(QMainWindow, Ui_AVDV):
         self.show_netstatus()
         # 检测网络
         self.add_net_text_main(' 检测网络中，请等待...')
-        net_info = [['github', 'https://raw.githubusercontent.com' , ''], ['javbus', 'https://www.javbus.com' , ''], ['javdb', 'https://www.javdb.com', ''], ['jav321', 'https://www.jav321.com' , ''], ['dmm', 'https://www.dmm.co.jp' , ''], ['avsox', 'https://avsox.website' , ''], ['xcity', 'https://xcity.jp' , ''], ['mgstage', 'https://www.mgstage.com', '']]
+        net_info = [['github', 'https://raw.githubusercontent.com' , ''], ['javbus', 'https://www.javbus.com' , ''], ['javdb', 'https://www.javdb.com', ''], ['jav321', 'https://www.jav321.com' , ''], ['dmm', 'https://www.dmm.co.jp' , ''], ['avsox', 'https://avsox.website' , ''], ['xcity', 'https://xcity.jp' , ''], ['mgstage', 'https://www.mgstage.com', ''], ['fc2hub', 'https://fc2hub.com', '']]
         for each in net_info:
             error_info = '连接失败，请检查网络或代理设置！'
             try:
@@ -1690,6 +1693,7 @@ class MyMAinWindow(QMainWindow, Ui_AVDV):
                 self.add_text_main('[-]Movie Data not found!')
                 return 'not found'
         elif 'http' not in json_data['cover']:
+            # print(json_data)
             raise Exception('Cover Url is None!')
         elif json_data['imagecut'] == 3 and 'http' not in json_data['cover_small']:
             raise Exception('Cover_small Url is None!')
@@ -1713,7 +1717,7 @@ class MyMAinWindow(QMainWindow, Ui_AVDV):
         except Exception as ex:
             print(ex)
         self.add_text_main('[+]Folder : ' + path)
-        self.add_text_main('[+]From   : ' + json_data['website'])
+        self.add_text_main('[+]From   : ' + json_data['source'])
         # =======================================================================文件命名规则
         number = json_data['number']
         naming_rule = str(self.get_naming_rule(json_data)).replace('--', '-').strip('-')
@@ -1794,7 +1798,7 @@ class MyMAinWindow(QMainWindow, Ui_AVDV):
             percentage = str(count / int(count_all) * 100)[:4] + '%'
             value = int(count / int(count_all) * 100)
             self.add_text_main(
-                '[!] - ' + str(self.count_claw) + ' - ' + percentage + ' - [' + str(count) + '/' + count_all + ']')
+                '[!]Round (' + str(self.count_claw) + ') - ' + percentage + ' - [' + str(count) + '/' + count_all + ']')
             try:
                 movie_number = getNumber(movie, escape_string)
                 self.add_text_main("[!]Making Data for   [" + movie + "], the number is [" + movie_number + "]")
@@ -1811,7 +1815,7 @@ class MyMAinWindow(QMainWindow, Ui_AVDV):
                 node.setText(0,
                             str(self.count_claw) + '-' + str(count) + '.' + os.path.splitext(movie.split('/')[-1])[0])
                 self.item_fail.addChild(node)
-                self.add_text_main('[-]Error in AVDC_Main: ' + str(error_info))
+                self.add_text_main('[-]Error in AVDC_Main1: ' + str(error_info))
                 if self.Ui.radioButton_fail_move_on.isChecked() and not os.path.exists(
                         failed_folder + '/' + os.path.split(movie)[1]):
                     if config['common']['soft_link'] == '0':
@@ -1819,7 +1823,7 @@ class MyMAinWindow(QMainWindow, Ui_AVDV):
                             shutil.move(movie, failed_folder + '/')
                             self.add_text_main('[-]Move ' + movie + ' to failed folder')
                         except shutil.Error as error_info:
-                            self.add_text_main('[-]Error in AVDC_Main: ' + str(error_info))
+                            self.add_text_main('[-]Error in AVDC_Main2: ' + str(error_info))
                 self.add_text_main("[*]================================================================================")
             self.progressBarValue.emit(int(value))
         self.CEF(movie_path)
