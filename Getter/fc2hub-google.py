@@ -48,7 +48,7 @@ def getOutline(html):  # 获取简介
 
 def main(number, appoint_url):
     number = number.upper().replace('FC-', '').replace('PPV', '')
-    url = 'https://fc2hub.com/search?kw=' + number
+    url = 'https://www.google.com/search?q=' + number + ' site:fc2hub.com'
     dic = {}
     real_url = ''
     if appoint_url:
@@ -57,15 +57,27 @@ def main(number, appoint_url):
         htmlcode = get_html(url)
         if str(htmlcode) == 'ProxyError':
             raise TimeoutError
-        html = etree.fromstring(htmlcode, etree.HTMLParser())
-        # web_cache_url = etree.tostring(html,encoding="utf-8").decode() # 将element对象转化为字符串
-        # print(web_cache_url)
-        # with open('11.txt', 'wt') as f:
-        #     f.write(web_cache_url)
-        real_url = html.xpath("//link[contains(@href, $number)]/@href", number=number)
+        html = etree.fromstring(htmlcode, etree.HTMLParser()) 
+        all_title = html.xpath("//h3/text()")
+        if len(all_title):
+            web_url = html.xpath('//h3/../@href')[0]
+            # web_cache_url = html.xpath('//div[@class="action-menu"]/ol/li/a/@href')[0] # 所有结果的第一个结果的快照链接
+            web_cache_url = html.xpath("//em[contains(text(), $number)]/../../../../div/div/div/span/div/ol/li/a/@href", number=number)[0] # 包含番号的所有快照的第一个链接
+            # web_cache_url = etree.tostring(web_cache_url,encoding="utf-8").decode() # 将element对象转化为字符串
 
+            if number in all_title[0]:
+                real_url = web_url
+            else:
+                # 进入第一个结果的网络快照继续尝试查找详情页地址
+                minddle_html = get_html(web_cache_url)
+                html3 = etree.fromstring(minddle_html, etree.HTMLParser())
+                # real_url = html3.xpath("//h4[contains(text()," + number + ")]/../a/@href")
+                real_url = html3.xpath("//h4[contains(text(), $number)]/../a/@href", number=number)
+                if real_url:
+                    real_url = real_url[0]
+                else:
+                    real_url = ''
         if real_url:
-            real_url = real_url[0]
             html_content = get_html(real_url)
             html_info = etree.fromstring(html_content, etree.HTMLParser())
             dic = {
@@ -80,7 +92,6 @@ def main(number, appoint_url):
                 'actor_photo': {},
                 'cover': getCover(html_info),
                 'extrafanart': getExtraFanart(html_info),
-                'cover_small': 'https://fc2hub.com/images/luscio-quad.png',
                 'imagecut': 0,
                 'director': '',
                 'series': '',
@@ -110,10 +121,6 @@ def main(number, appoint_url):
     return js
 
 
-
-# print(main('1860858', ''))
-# print(main('1599412', ''))
-# print(main('1131214', ''))
 # print(main('1837553', ''))
 # print(main('1613618', ''))
 # print(main('1837553', ''))
@@ -121,4 +128,4 @@ def main(number, appoint_url):
 # print(main('1760182', ''))
 # print(main('1251689', ''))
 # print(main('674239', ""))
-# print(main('674239', "))
+# print(main('674239', "https://fc2club.com//html/FC2-674239.html"))
