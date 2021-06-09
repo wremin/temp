@@ -35,7 +35,7 @@ class MyMAinWindow(QMainWindow, Ui_AVDV):
         self.Init_Ui()
         self.set_style()
         # 初始化需要的变量
-        self.localversion = '20210610'
+        self.localversion = '20210611'
         # self.version = '3.963'
         self.m_drag = False
         self.m_DragPosition = 0
@@ -1126,9 +1126,11 @@ class MyMAinWindow(QMainWindow, Ui_AVDV):
                 break
         if check_pic(path + '/' + thumb_name):
             self.add_text_main('[+]Thumb Downloaded!  ' + thumb_name)
-        else:
-            os.remove(path + '/' + thumb_name)
-            raise Exception("The Size of Thumb is Error! Deleted " + thumb_name + '!')
+        elif json_data['cover_small']:
+            self.DownloadFileWithFilename(json_data['cover_small'], thumb_name, path, Config, filepath, failed_folder)
+            if not check_pic(path + '/' + thumb_name):
+                os.remove(path + '/' + thumb_name)
+                raise Exception("The Size of Thumb is Error! Deleted " + thumb_name + '!')
 
     def deletethumb(self, path, naming_rule):
         try:
@@ -1481,7 +1483,7 @@ class MyMAinWindow(QMainWindow, Ui_AVDV):
         if len(actor.split(',')) >= 10:  # 演员过多取前五个
             actor = actor.split(',')[0] + ',' + actor.split(',')[1] + ',' + actor.split(',')[2] + '等演员'
         folder_name = json_data['folder_name']
-        if config['Name_Rule']['folder_name_C']:
+        if not config['Name_Rule']['folder_name_C']:
             c_word = ''
         path = folder_name.replace('title', title).replace('studio', studio).replace('year', year).replace('runtime',
                                                                                                            runtime).replace(
