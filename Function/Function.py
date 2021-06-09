@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+from random import randint
+import time
 import re
 import os
 import json
@@ -306,12 +308,9 @@ def get_info(json_data):
 # ========================================================================保存配置到config.ini
 def save_config(json_config):
     # json_config = json.loads(json_config)
-    config_file = ''
-    if os.path.exists('../config.ini'):
-        config_file = '../config.ini'
-    elif os.path.exists('config.ini'):
-        config_file = 'config.ini'
+    config_file = 'config.ini'
     with open(config_file, "wt", encoding='UTF-8') as code:
+        print("# modified time: " + time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime()) + "\n", file=code)
         print("[common]", file=code)
         print("main_mode = " + str(json_config['main_mode']), file=code)
         print("failed_output_folder = " + json_config['failed_output_folder'], file=code)
@@ -382,8 +381,7 @@ def save_config(json_config):
         print("[extrafanart]", file=code)
         print("extrafanart_download = " + str(json_config['extrafanart_download']), file=code)
         print("extrafanart_folder = " + str(json_config['extrafanart_folder']), file=code)
-
-    # code.close()
+    code.close()
 
 
 def check_pic(path_pic):
