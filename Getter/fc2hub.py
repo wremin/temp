@@ -61,7 +61,10 @@ def main(number, appoint_url):
         all_title = html.xpath("//h3/text()")
         if len(all_title):
             web_url = html.xpath('//h3/../@href')[0]
-            web_cache_url = html.xpath('//div[@class="action-menu"]/ol/li/a/@href')[0]
+            # web_cache_url = html.xpath('//div[@class="action-menu"]/ol/li/a/@href')[0] # 所有结果的第一个结果的快照链接
+            web_cache_url = html.xpath("//em[contains(text(), $number)]/../../../../div/div/div/span/div/ol/li/a/@href", number=number)[0] # 包含番号的所有快照的第一个链接
+            # web_cache_url = etree.tostring(web_cache_url,encoding="utf-8").decode() # 将element对象转化为字符串
+
             if number in all_title[0]:
                 real_url = web_url
             else:
@@ -118,7 +121,7 @@ def main(number, appoint_url):
     return js
 
 
-
+# print(main('1837553', ''))
 # print(main('1613618', ''))
 # print(main('1837553', ''))
 # print(main('1837589', ""))
