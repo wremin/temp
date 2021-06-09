@@ -35,8 +35,8 @@ class MyMAinWindow(QMainWindow, Ui_AVDV):
         self.Init_Ui()
         self.set_style()
         # 初始化需要的变量
+        self.localversion = '20210610'
         # self.version = '3.963'
-        self.localversion = '20210609'
         self.m_drag = False
         self.m_DragPosition = 0
         self.count_claw = 0  # 批量刮削次数
@@ -46,22 +46,12 @@ class MyMAinWindow(QMainWindow, Ui_AVDV):
         self.json_array = {}
         self.Init()
         self.Load_Config()
-        self.show_version() # 启动后在【日志】页面显示网络代理情况
+        self.show_version() # 启动后在【日志】页面显示版本信息
         self.add_net_text_main('\n tips： 代理设置在：【设置】 - 【其他设置】 - 【代理设置】。\n') 
         self.show_netstatus() # 启动后在【检测网络】页面显示网络代理情况
         self.add_net_text_main('\n\n\n 点击 【开始检测】以测试网络连通性。\n') 
-        # ========================================================================打开日志文件
-        if self.Ui.radioButton_log_on.isChecked():
-            if not os.path.exists('Log'):
-                os.makedirs('Log')
-            log_name = 'Log/' + time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime()) + '.txt'
-            self.log_txt = open(log_name, "wb", buffering=0)
-
         self.UpdateCheck_start() # 检查更新
 
-        if self.Ui.radioButton_log_on.isChecked():
-            self.add_text_main('[-]' + ('Created log file: ' + log_name).center(80))
-            self.add_text_main("[*]================================================================================")
 
     def Init_Ui(self):
         ico_path = ''
@@ -199,10 +189,10 @@ class MyMAinWindow(QMainWindow, Ui_AVDV):
 
     # ========================================================================显示版本号
     def show_version(self):
-        self.Ui.textBrowser_log_main.append('[*]' + 'AVDC'.center(80, '='))
-        self.Ui.textBrowser_log_main.append('[*]' + ('Current Version: ' + self.localversion).center(80))
-        self.Ui.textBrowser_log_main.append('[*]' + '基于项目 https://github.com/moyy996/AVDC 修改'.center(80))
-        self.Ui.textBrowser_log_main.append('[*]================================================================================')
+        self.add_text_main('[*]' + 'AVDC'.center(80, '='))
+        self.add_text_main('[*]' + ('Current Version: ' + self.localversion).center(80))
+        self.add_text_main('[*]' + '基于项目 https://github.com/moyy996/AVDC 修改'.center(80))
+        self.add_text_main('[*]================================================================================')
 
     # ========================================================================鼠标拖动窗口
     def mousePressEvent(self, e):
@@ -300,7 +290,7 @@ class MyMAinWindow(QMainWindow, Ui_AVDV):
             t = threading.Thread(target=self.init_config_clicked)
             t.start()  # 启动线程,即让线程开始执行
         except Exception as error_info:
-            self.add_text_main('[-]Error in pushButton_save_config_clicked: ' + str(error_info))
+            self.add_text_main('[-]Error in pushButton_init_config_clicked: ' + str(error_info))
 
     def init_config_clicked(self):
         json_config = {
@@ -321,7 +311,7 @@ class MyMAinWindow(QMainWindow, Ui_AVDV):
             'folder_name': 'actor/number actor',
             'naming_media': 'number title',
             'naming_file': 'number',
-            'folder_name_C': 0,
+            'folder_name_C': 1,
             'literals': '\()',
             'folders': 'JAV_output',
             'string': '1080p,720p,22-sht.me,-HD',
@@ -350,148 +340,158 @@ class MyMAinWindow(QMainWindow, Ui_AVDV):
     # ========================================================================加载config
     def Load_Config(self):
         config_file = 'config.ini'
-        config = ConfigParser()
-        config.read(config_file, encoding='UTF-8')
-        # ========================================================================common
-        if int(config['common']['main_mode']) == 1:
-            self.Ui.radioButton_common.setChecked(True)
-        elif int(config['common']['main_mode']) == 2:
-            self.Ui.radioButton_sort.setChecked(True)
-        if int(config['common']['soft_link']) == 1:
-            self.Ui.radioButton_soft_on.setChecked(True)
-        elif int(config['common']['soft_link']) == 0:
-            self.Ui.radioButton_soft_off.setChecked(True)
-        if int(config['common']['failed_file_move']) == 1:
-            self.Ui.radioButton_fail_move_on.setChecked(True)
-        elif int(config['common']['failed_file_move']) == 0:
-            self.Ui.radioButton_fail_move_off.setChecked(True)
-        if int(config['common']['show_poster']) == 1:
-            self.Ui.checkBox_cover.setChecked(True)
-            self.cover_flag = True
-        elif int(config['common']['show_poster']) == 0:
-            self.Ui.checkBox_cover.setChecked(False)
-            self.cover_flag = False
-        if config['common']['website'] == 'all':
-            self.Ui.comboBox_website_all.setCurrentIndex(0)
-        elif config['common']['website'] == 'javbus':
-            self.Ui.comboBox_website_all.setCurrentIndex(1)
-        elif config['common']['website'] == 'javdb':
-            self.Ui.comboBox_website_all.setCurrentIndex(2)
-        elif config['common']['website'] == 'jav321':
-            self.Ui.comboBox_website_all.setCurrentIndex(3)
-        elif config['common']['website'] == 'dmm':
-            self.Ui.comboBox_website_all.setCurrentIndex(4)
-        elif config['common']['website'] == 'avsox':
-            self.Ui.comboBox_website_all.setCurrentIndex(5)
-        elif config['common']['website'] == 'xcity':
-            self.Ui.comboBox_website_all.setCurrentIndex(6)
-        elif config['common']['website'] == 'mgstage':
-            self.Ui.comboBox_website_all.setCurrentIndex(7)
-        elif config['common']['website'] == 'fc2hub':
-            self.Ui.comboBox_website_all.setCurrentIndex(8)
+        if os.path.exists(config_file):
+            config = ConfigParser()
+            try:
+                config.read(config_file, encoding='UTF-8')
+            except:
+                self.init_config_clicked()
+                self.add_text_main('config.ini is corrupt, and has been reset now.\n')
+                return
+            # ========================================================================common
+            if int(config['common']['main_mode']) == 1:
+                self.Ui.radioButton_common.setChecked(True)
+            elif int(config['common']['main_mode']) == 2:
+                self.Ui.radioButton_sort.setChecked(True)
+            if int(config['common']['soft_link']) == 1:
+                self.Ui.radioButton_soft_on.setChecked(True)
+            elif int(config['common']['soft_link']) == 0:
+                self.Ui.radioButton_soft_off.setChecked(True)
+            if int(config['common']['failed_file_move']) == 1:
+                self.Ui.radioButton_fail_move_on.setChecked(True)
+            elif int(config['common']['failed_file_move']) == 0:
+                self.Ui.radioButton_fail_move_off.setChecked(True)
+            if int(config['common']['show_poster']) == 1:
+                self.Ui.checkBox_cover.setChecked(True)
+                self.cover_flag = True
+            elif int(config['common']['show_poster']) == 0:
+                self.Ui.checkBox_cover.setChecked(False)
+                self.cover_flag = False
+            if config['common']['website'] == 'all':
+                self.Ui.comboBox_website_all.setCurrentIndex(0)
+            elif config['common']['website'] == 'javbus':
+                self.Ui.comboBox_website_all.setCurrentIndex(1)
+            elif config['common']['website'] == 'javdb':
+                self.Ui.comboBox_website_all.setCurrentIndex(2)
+            elif config['common']['website'] == 'jav321':
+                self.Ui.comboBox_website_all.setCurrentIndex(3)
+            elif config['common']['website'] == 'dmm':
+                self.Ui.comboBox_website_all.setCurrentIndex(4)
+            elif config['common']['website'] == 'avsox':
+                self.Ui.comboBox_website_all.setCurrentIndex(5)
+            elif config['common']['website'] == 'xcity':
+                self.Ui.comboBox_website_all.setCurrentIndex(6)
+            elif config['common']['website'] == 'mgstage':
+                self.Ui.comboBox_website_all.setCurrentIndex(7)
+            elif config['common']['website'] == 'fc2hub':
+                self.Ui.comboBox_website_all.setCurrentIndex(8)
 
-        self.Ui.lineEdit_success.setText(config['common']['success_output_folder'])
-        self.Ui.lineEdit_fail.setText(config['common']['failed_output_folder'])
-        # ========================================================================proxy
-        if config['proxy']['type'] == 'no' or config['proxy']['type'] == '':
-            self.Ui.radioButton_proxy_nouse.setChecked(True)
-        elif config['proxy']['type'] == 'http':
-            self.Ui.radioButton_proxy_http.setChecked(True)
-        elif config['proxy']['type'] == 'socks5':
-            self.Ui.radioButton_proxy_socks5.setChecked(True)
-        self.Ui.lineEdit_proxy.setText(config['proxy']['proxy'])
-        self.Ui.horizontalSlider_timeout.setValue(int(config['proxy']['timeout']))
-        self.Ui.horizontalSlider_retry.setValue(int(config['proxy']['retry']))
-        # ========================================================================Name_Rule
-        self.Ui.lineEdit_dir_name.setText(config['Name_Rule']['folder_name'])
-        self.Ui.lineEdit_media_name.setText(config['Name_Rule']['naming_media'])
-        self.Ui.lineEdit_local_name.setText(config['Name_Rule']['naming_file'])
-        # ========================================================================update
-        if int(config['update']['update_check']) == 1:
-            self.Ui.radioButton_update_on.setChecked(True)
-        elif int(config['update']['update_check']) == 0:
-            self.Ui.radioButton_update_off.setChecked(True)
-        # ========================================================================folder_name_C
-        if int(config['Name_Rule']['folder_name_C']) == 1:
-            self.Ui.radioButton_foldername_C_on.setChecked(True)
-        elif int(config['Name_Rule']['folder_name_C']) == 0:
-            self.Ui.radioButton_foldername_C_off.setChecked(True)
-        # ========================================================================log
-        if int(config['log']['save_log']) == 1:
-            self.Ui.radioButton_log_on.setChecked(True)
-        elif int(config['log']['save_log']) == 0:
-            self.Ui.radioButton_log_off.setChecked(True)
-        # ========================================================================media
-        self.Ui.lineEdit_movie_type.setText(config['media']['media_type'])
-        self.Ui.lineEdit_sub_type.setText(config['media']['sub_type'])
-        self.Ui.lineEdit_movie_path.setText(str(config['media']['media_path']).replace('\\', '/'))
-        # ========================================================================escape
-        self.Ui.lineEdit_escape_dir.setText(config['escape']['folders'])
-        self.Ui.lineEdit_escape_char.setText(config['escape']['literals'])
-        self.Ui.lineEdit_escape_dir_move.setText(config['escape']['folders'])
-        self.Ui.lineEdit_escape_string.setText(config['escape']['string'])
-        # ========================================================================debug_mode
-        if int(config['debug_mode']['switch']) == 1:
-            self.Ui.radioButton_debug_on.setChecked(True)
-        elif int(config['debug_mode']['switch']) == 0:
-            self.Ui.radioButton_debug_off.setChecked(True)
-        # ========================================================================emby
-        self.Ui.lineEdit_emby_url.setText(config['emby']['emby_url'])
-        self.Ui.lineEdit_api_key.setText(config['emby']['api_key'])
-        # ========================================================================mark
-        if int(config['mark']['poster_mark']) == 1:
-            self.Ui.radioButton_poster_mark_on.setChecked(True)
-        elif int(config['mark']['poster_mark']) == 0:
-            self.Ui.radioButton_poster_mark_off.setChecked(True)
-        if int(config['mark']['thumb_mark']) == 1:
-            self.Ui.radioButton_thumb_mark_on.setChecked(True)
-        elif int(config['mark']['thumb_mark']) == 0:
-            self.Ui.radioButton_thumb_mark_off.setChecked(True)
-        self.Ui.horizontalSlider_mark_size.setValue(int(config['mark']['mark_size']))
-        if 'SUB' in str(config['mark']['mark_type']).upper():
-            self.Ui.checkBox_sub.setChecked(True)
-        if 'LEAK' in str(config['mark']['mark_type']).upper():
-            self.Ui.checkBox_leak.setChecked(True)
-        if 'UNCENSORED' in str(config['mark']['mark_type']).upper():
-            self.Ui.checkBox_uncensored.setChecked(True)
-        if 'top_left' == config['mark']['mark_pos']:
-            self.Ui.radioButton_top_left.setChecked(True)
-        elif 'bottom_left' == config['mark']['mark_pos']:
-            self.Ui.radioButton_bottom_left.setChecked(True)
-        elif 'top_right' == config['mark']['mark_pos']:
-            self.Ui.radioButton_top_right.setChecked(True)
-        elif 'bottom_right' == config['mark']['mark_pos']:
-            self.Ui.radioButton_bottom_right.setChecked(True)
-        # ========================================================================uncensored
-        if int(config['uncensored']['uncensored_poster']) == 1:
-            self.Ui.radioButton_poster_cut.setChecked(True)
-        elif int(config['uncensored']['uncensored_poster']) == 0:
-            self.Ui.radioButton_poster_official.setChecked(True)
-        self.Ui.lineEdit_uncensored_prefix.setText(config['uncensored']['uncensored_prefix'])
-        # ========================================================================file_download
-        if int(config['file_download']['nfo']) == 1:
-            self.Ui.checkBox_download_nfo.setChecked(True)
-        elif int(config['file_download']['nfo']) == 0:
-            self.Ui.checkBox_download_nfo.setChecked(False)
-        if int(config['file_download']['poster']) == 1:
-            self.Ui.checkBox_download_poster.setChecked(True)
-        elif int(config['file_download']['poster']) == 0:
-            self.Ui.checkBox_download_poster.setChecked(False)
-        if int(config['file_download']['fanart']) == 1:
-            self.Ui.checkBox_download_fanart.setChecked(True)
-        elif int(config['file_download']['fanart']) == 0:
-            self.Ui.checkBox_download_fanart.setChecked(False)
-        if int(config['file_download']['thumb']) == 1:
-            self.Ui.checkBox_download_thumb.setChecked(True)
-        elif int(config['file_download']['thumb']) == 0:
-            self.Ui.checkBox_download_thumb.setChecked(False)
-        # ========================================================================extrafanart
-        if int(config['extrafanart']['extrafanart_download']) == 1:
-            self.Ui.radioButton_extrafanart_download_on.setChecked(True)
-        elif int(config['extrafanart']['extrafanart_download']) == 0:
-            self.Ui.radioButton_extrafanart_download_off.setChecked(True)
-        self.Ui.lineEdit_extrafanart_dir.setText(config['extrafanart']['extrafanart_folder'])
-
+            self.Ui.lineEdit_success.setText(config['common']['success_output_folder'])
+            self.Ui.lineEdit_fail.setText(config['common']['failed_output_folder'])
+            # ========================================================================proxy
+            if config['proxy']['type'] == 'no' or config['proxy']['type'] == '':
+                self.Ui.radioButton_proxy_nouse.setChecked(True)
+            elif config['proxy']['type'] == 'http':
+                self.Ui.radioButton_proxy_http.setChecked(True)
+            elif config['proxy']['type'] == 'socks5':
+                self.Ui.radioButton_proxy_socks5.setChecked(True)
+            self.Ui.lineEdit_proxy.setText(config['proxy']['proxy'])
+            self.Ui.horizontalSlider_timeout.setValue(int(config['proxy']['timeout']))
+            self.Ui.horizontalSlider_retry.setValue(int(config['proxy']['retry']))
+            # ========================================================================Name_Rule
+            self.Ui.lineEdit_dir_name.setText(config['Name_Rule']['folder_name'])
+            self.Ui.lineEdit_media_name.setText(config['Name_Rule']['naming_media'])
+            self.Ui.lineEdit_local_name.setText(config['Name_Rule']['naming_file'])
+            # ========================================================================update
+            if int(config['update']['update_check']) == 1:
+                self.Ui.radioButton_update_on.setChecked(True)
+            elif int(config['update']['update_check']) == 0:
+                self.Ui.radioButton_update_off.setChecked(True)
+            # ========================================================================folder_name_C
+            if int(config['Name_Rule']['folder_name_C']) == 1:
+                self.Ui.radioButton_foldername_C_on.setChecked(True)
+            elif int(config['Name_Rule']['folder_name_C']) == 0:
+                self.Ui.radioButton_foldername_C_off.setChecked(True)
+            # ========================================================================log
+            if int(config['log']['save_log']) == 1:
+                self.Ui.radioButton_log_on.setChecked(True)
+            elif int(config['log']['save_log']) == 0:
+                self.Ui.radioButton_log_off.setChecked(True)
+            # ========================================================================media
+            self.Ui.lineEdit_movie_type.setText(config['media']['media_type'])
+            self.Ui.lineEdit_sub_type.setText(config['media']['sub_type'])
+            self.Ui.lineEdit_movie_path.setText(str(config['media']['media_path']).replace('\\', '/'))
+            # ========================================================================escape
+            self.Ui.lineEdit_escape_dir.setText(config['escape']['folders'])
+            self.Ui.lineEdit_escape_char.setText(config['escape']['literals'])
+            self.Ui.lineEdit_escape_dir_move.setText(config['escape']['folders'])
+            self.Ui.lineEdit_escape_string.setText(config['escape']['string'])
+            # ========================================================================debug_mode
+            if int(config['debug_mode']['switch']) == 1:
+                self.Ui.radioButton_debug_on.setChecked(True)
+            elif int(config['debug_mode']['switch']) == 0:
+                self.Ui.radioButton_debug_off.setChecked(True)
+            # ========================================================================emby
+            self.Ui.lineEdit_emby_url.setText(config['emby']['emby_url'])
+            self.Ui.lineEdit_api_key.setText(config['emby']['api_key'])
+            # ========================================================================mark
+            if int(config['mark']['poster_mark']) == 1:
+                self.Ui.radioButton_poster_mark_on.setChecked(True)
+            elif int(config['mark']['poster_mark']) == 0:
+                self.Ui.radioButton_poster_mark_off.setChecked(True)
+            if int(config['mark']['thumb_mark']) == 1:
+                self.Ui.radioButton_thumb_mark_on.setChecked(True)
+            elif int(config['mark']['thumb_mark']) == 0:
+                self.Ui.radioButton_thumb_mark_off.setChecked(True)
+            self.Ui.horizontalSlider_mark_size.setValue(int(config['mark']['mark_size']))
+            if 'SUB' in str(config['mark']['mark_type']).upper():
+                self.Ui.checkBox_sub.setChecked(True)
+            if 'LEAK' in str(config['mark']['mark_type']).upper():
+                self.Ui.checkBox_leak.setChecked(True)
+            if 'UNCENSORED' in str(config['mark']['mark_type']).upper():
+                self.Ui.checkBox_uncensored.setChecked(True)
+            if 'top_left' == config['mark']['mark_pos']:
+                self.Ui.radioButton_top_left.setChecked(True)
+            elif 'bottom_left' == config['mark']['mark_pos']:
+                self.Ui.radioButton_bottom_left.setChecked(True)
+            elif 'top_right' == config['mark']['mark_pos']:
+                self.Ui.radioButton_top_right.setChecked(True)
+            elif 'bottom_right' == config['mark']['mark_pos']:
+                self.Ui.radioButton_bottom_right.setChecked(True)
+            # ========================================================================uncensored
+            if int(config['uncensored']['uncensored_poster']) == 1:
+                self.Ui.radioButton_poster_cut.setChecked(True)
+            elif int(config['uncensored']['uncensored_poster']) == 0:
+                self.Ui.radioButton_poster_official.setChecked(True)
+            self.Ui.lineEdit_uncensored_prefix.setText(config['uncensored']['uncensored_prefix'])
+            # ========================================================================file_download
+            if int(config['file_download']['nfo']) == 1:
+                self.Ui.checkBox_download_nfo.setChecked(True)
+            elif int(config['file_download']['nfo']) == 0:
+                self.Ui.checkBox_download_nfo.setChecked(False)
+            if int(config['file_download']['poster']) == 1:
+                self.Ui.checkBox_download_poster.setChecked(True)
+            elif int(config['file_download']['poster']) == 0:
+                self.Ui.checkBox_download_poster.setChecked(False)
+            if int(config['file_download']['fanart']) == 1:
+                self.Ui.checkBox_download_fanart.setChecked(True)
+            elif int(config['file_download']['fanart']) == 0:
+                self.Ui.checkBox_download_fanart.setChecked(False)
+            if int(config['file_download']['thumb']) == 1:
+                self.Ui.checkBox_download_thumb.setChecked(True)
+            elif int(config['file_download']['thumb']) == 0:
+                self.Ui.checkBox_download_thumb.setChecked(False)
+            # ========================================================================extrafanart
+            if int(config['extrafanart']['extrafanart_download']) == 1:
+                self.Ui.radioButton_extrafanart_download_on.setChecked(True)
+            elif int(config['extrafanart']['extrafanart_download']) == 0:
+                self.Ui.radioButton_extrafanart_download_off.setChecked(True)
+            self.Ui.lineEdit_extrafanart_dir.setText(config['extrafanart']['extrafanart_folder'])
+         
+        else:
+            # ini不存在，重新创建
+            self.init_config_clicked()
+            self.add_text_main('Create config file: config.ini\n')
     # ========================================================================读取设置页设置，保存在config.ini
     def pushButton_save_config_clicked(self):
         try:
@@ -759,12 +759,9 @@ class MyMAinWindow(QMainWindow, Ui_AVDV):
         API_KEY = 'IQs1mkG4FerdtmNh6qKDI4fW'
         SECRET_KEY = 'dLr9GTqqutqP9nWKKRaEinVDhxYlPbnD'
 
-        client = AipBodyAnalysis(APP_ID, API_KEY, SECRET_KEY)
-
         """ 获取图片分辨率 """
         im = Image.open(file_path)  # 返回一个Image对象
         width, height = im.size
-
         """ 读取图片 """
         with open(file_path, 'rb') as fp:
             image = fp.read()
@@ -772,31 +769,35 @@ class MyMAinWindow(QMainWindow, Ui_AVDV):
         """ 获取裁剪区域 """
         if height / width <= 1.5:  # 长宽比大于1.5，太宽
             """ 调用人体检测与属性识别 """
-            result = client.bodyAnalysis(image)
-            ewidth = int(height / 1.5)
-
             try:
+                client = AipBodyAnalysis(APP_ID, API_KEY, SECRET_KEY)
+                result = client.bodyAnalysis(image)
+                ewidth = int(height / 1.5)
                 ex = int(result["person_info"][0]['body_parts']['nose']['x'])
-            except:
-                ex = int(width / 4)
+                if width - ex < ewidth / 2:
+                    ex = width - ewidth
+                else:
+                    ex -= int(ewidth / 2)
+                if ex < 0:
+                    ex = 0
+                ey = 0
+                eh = height
+                if ewidth > width:
+                    ew = width
+                else:
+                    ew = ewidth
+            except Exception as error_info:
+                self.add_text_main('[*]提示：图片人脸位置百度检测接口请求次数已达上限！接下来将使用内置规则进行裁剪...')
+                ex = int((width - height / 1.5) / 2)
+                ey = 0
+                ew = int(height / 1.5)
+                eh = int(height)
 
-            if width - ex < ewidth / 2:
-                ex = width - ewidth
-            else:
-                ex -= int(ewidth / 2)
-            if ex < 0:
-                ex = 0
-            ey = 0
-            eh = height
-            if ewidth > width:
-                ew = width
-            else:
-                ew = ewidth
         elif height / width > 1.5:  # 长宽比小于1.5，太窄
             ex = 0
-            ey = 0
+            ey = int((height - width * 1.5) / 2)
             ew = int(width)
-            eh = ew * 1.5
+            eh = int(width * 1.5)
         fp = open(file_path, 'rb')
         img = Image.open(fp)
         img = img.convert('RGB')
@@ -1034,27 +1035,34 @@ class MyMAinWindow(QMainWindow, Ui_AVDV):
 
     # ========================================================================语句添加到日志框
     def add_text_main(self, text):
-        try:
-            time.sleep(0.1)
-            if self.Ui.radioButton_log_on.isChecked():
+        if self.Ui.radioButton_log_on.isChecked():
+            try:
                 self.log_txt.write((str(text) + '\n').encode('utf8'))
+            except:
+                if not os.path.exists('Log'):
+                    os.makedirs('Log')  
+                log_name = 'Log/' + time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime()) + '.txt'
+                self.log_txt = open(log_name, "wb", buffering=0)
+
+                self.add_text_main('Create log file: ' + log_name + '\n')
+                self.add_text_main(text)
+                return
+        try:
             self.main_logs_show.emit(text)
+            # time.sleep(0.1)
             # self.Ui.textBrowser_log_main.append(str(text))
-            # self.Ui.textBrowser_log_main.verticalScrollBar().setValue(self.Ui.textBrowser_log_main.verticalScrollBar().maximum())
             # self.Ui.textBrowser_log_main.moveCursor(QTextCursor.End)
+            # self.Ui.textBrowser_log_main.verticalScrollBar().setValue(self.Ui.textBrowser_log_main.verticalScrollBar().maximum())
         except Exception as error_info:
             self.Ui.textBrowser_log_main.append('[-]Error in add_text_main' + str(error_info))
-        except:
-            pass
-
     # ========================================================================语句添加到日志框
     def add_net_text_main(self, text):
         try:
-            # time.sleep(0.1)
             self.net_logs_show.emit(text)
+            # time.sleep(0.1)
             # self.Ui.textBrowser_net_main.append(text)
-            # self.Ui.textBrowser_net_main.verticalScrollBar().setValue(self.Ui.textBrowser_net_main.verticalScrollBar().maximum())
             # self.Ui.textBrowser_net_main.moveCursor(QTextCursor.End)
+            # self.Ui.textBrowser_net_main.verticalScrollBar().setValue(self.Ui.textBrowser_net_main.verticalScrollBar().maximum())
         except Exception as error_info:
             self.Ui.textBrowser_net_main.append('[-]Error in add_net_text_main' + str(error_info))
 
@@ -1557,11 +1565,13 @@ class MyMAinWindow(QMainWindow, Ui_AVDV):
                 return
             remote = int(data["tag_name"].replace(".",""))
             localversion = int(self.localversion.replace(".", ""))
+            new_content = str(data["body"].replace(".","")).replace('====', '').replace('===', '').replace('\r\n', '\n   [+]')
             if localversion < remote:
                 new += 1
                 self.add_text_main('[*]' + ('* New update ' + str(data["tag_name"]) + ' is Available *').center(80))
-                self.add_text_main('[*]' + '↓ Download ↓'.center(80))
-                self.add_text_main('[*]' + 'https://github.com/Hermit10/temp/releases'.center(80))
+                self.add_text_main("[*]" + ("").center(80, '='))
+                self.add_text_main('   [+]更新内容：' + new_content)
+                self.add_text_main('   [+]\n   [+]下载地址: https://github.com/Hermit10/temp/releases')
             if not new:
                 self.add_text_main('[!]' + 'No Newer Version Available!'.center(80))
             self.add_text_main("[*]================================================================================")
