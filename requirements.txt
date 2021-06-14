@@ -1,5 +1,4 @@
 lxml==4.6.1
-baidu_aip==2.2.18.0
 pyquery==1.4.1
 cloudscraper==1.2.58
 requests==2.25.0

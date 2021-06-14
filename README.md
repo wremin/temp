@@ -1,98 +1,290 @@
-更新说明：
-
-基于项目 https://github.com/moyy996/AVDC 的gui版本进行修改。
-
-2021.06.11
-===========================================================================================
-1，[修复] 继续优化fc2刮削，无图时使用默认图，减少无图导致的下载失败问题
-
-2，[修复] 修复有中文字幕时文件夹加-C失效的问题
-
-2021.06.10
-===========================================================================================
-1，[修复] 修复win版无法保存配置的问题
-
-2，[优化] 配置文件丢失或损坏时自动修复
-
-3，[修复] 修复百度人脸检测接口超限导致刮削失败的问题（待测试）
-
-4，[优化] 优化内置图片裁剪规则，改善裁剪效果
-
-5，[优化] 继续优化fc2刮削，减少漏网之鱼
-
-2021.06.09
-===========================================================================================
-1，[新增] 支持fc2刮削，使用fc2hub数据
-
-2，[修复] 修复jav321无封面大图时导致刮削失败的问题
-
-3，[修复] fc2裁剪图片有时保存失败问题
-
-2021.06.08
-===========================================================================================
-1，[修复] 修复崩溃问题，目前应该非常稳定了，如崩溃提issues
-
-2，[优化] 优化启动逻辑，提升启动速度
-
-3，[优化] 优化网络检测信息
-
-4，[新增] 新增有字幕时文件夹加-C的配置开关
-
-5，[新增] 有新版本新增提示信息，目前同时显示moyy996和本版本的更新信息
-
-2021.06.06
-===========================================================================================
-1，[修复] 修复http代理无法连接问题
-
-2021.06.05
-===========================================================================================
-1，[修复] 修复恢复配置导致无法启动的bug（配置文件字段缺失引起）
-
-2，[优化] 美化了软件界面
-
-3，[其他] 一些小问题修改
+# AVDC
 
 
-2021.06.03
-===========================================================================================
-1，[修复] javbus刮削失败问题（已更正封面地址）
-
-2，[修复] javdb刮削失败问题（解决5秒盾防爬（不稳定）、过滤掉男演员，只保留女演员、单文件刮削失败问题）
-
-3，[修复] jav321刮削失败问题（解决unkown文件名问题）
-
-4，[修复] avsox刮削失败问题（更换新地址及字段匹配）
-
-5，[移除] 由于f2club关站，移除f2club。目前f2文件使用javdb刮削
-
-6，[优化] 日志页面增加开始按钮
-
-7，[优化] 自动记忆“显示封面”的勾选状态
-
-8，[优化] 刮削中文字幕文件时，文件夹名称自动在番号后加-C
-
-9，[优化] 优化检查更新逻辑
-
-10，[优化] 修复日志滚屏引起的崩溃问题，增强稳定性
-
-11，[新增] 网络检测功能，检测网站是否能访问
-
-效果图
-===========================================================================================
-
-![image](https://user-images.githubusercontent.com/24836174/120846095-3e920f00-c5a4-11eb-89f7-06b7671b47e1.png)
-
-![image](https://user-images.githubusercontent.com/24836174/120846177-55386600-c5a4-11eb-8345-1e07e43388b3.png)
-
-![image](https://user-images.githubusercontent.com/24836174/120846265-726d3480-c5a4-11eb-88b5-af22dbe93bcd.png)
-
-![image](https://user-images.githubusercontent.com/24836174/120846310-82851400-c5a4-11eb-864c-d360d70cb420.png)
-
-![image](https://user-images.githubusercontent.com/24836174/120846347-92045d00-c5a4-11eb-97f1-98a4894c7aff.png)
-
-![image](https://user-images.githubusercontent.com/24836174/120846414-a7798700-c5a4-11eb-9b67-0d74601c1ffa.png)
+# 目录
+* [1.简介](#1简介)<br>
+* [2.反馈](#2反馈)
+* [3.常见番号命名规范(必看!!!!!!!!!)](#3常见番号命名规范)
+* [4.效果图](#4效果图)
+    * [界面截图](#41界面截图)
+    * [文件结构](#43文件结构)
+    * [媒体库](#44媒体库)
+* [5.如何使用](#5如何使用)
+    * [下载](#51下载)
+    * [简明教程](#52简要教程)
+    * [模块安装](#53模块安装)
+    * [配置设置](#54配置设置)
+* [6.工具](#6工具)
+* [7.异常处理（重要）](#7异常处理重要)
+* [8.关于群晖NAS](#8关于群晖NAS)
+* [9.FAQ](#9FAQ)
+* [10.故事](#10故事)
+* [11.声明](#11声明)
+* [12.写在后面](#12写在后面)
 
 
+# 1.简介
+**[命令行版](https://github.com/yoshiko2/AV_Data_Capture)(原作者)**：<br>
+<a title="Hits" target="_blank" href="https://github.com/yoshiko2/AV_Data_Capture"><img src="https://hits.b3log.org/yoshiko2/AV_Data_Capture.svg"></a>
+![](https://img.shields.io/badge/build-passing-brightgreen.svg?style=flat-square)
+![](https://img.shields.io/github/downloads/yoshiko2/av_data_capture/total.svg?style=flat-square)
+![](https://img.shields.io/github/license/yoshiko2/av_data_capture.svg?style=flat-square)
+![](https://img.shields.io/github/release/yoshiko2/av_data_capture.svg?style=flat-square)
+![](https://img.shields.io/badge/Python-3.7-yellow.svg?style=flat-square&logo=python)<br>
+**GUI版(本项目)**：<br>
+<a title="Hits" target="_blank" href="https://github.com/moyy996/avdc"><img src="https://hits.b3log.org/moyy996/AVDC.svg"></a>
+![](https://img.shields.io/badge/build-passing-brightgreen.svg?style=flat-square)
+![](https://img.shields.io/github/downloads/moyy996/avdc/total.svg?style=flat-square)
+![](https://img.shields.io/github/license/moyy996/avdc.svg?style=flat-square)
+![](https://img.shields.io/github/release/moyy996/avdc.svg?style=flat-square)
+![](https://img.shields.io/badge/Python-3.7-yellow.svg?style=flat-square&logo=python)
+![](https://img.shields.io/badge/Pyqt-5-blue.svg?style=flat-square)<br>
+
+## 主要功能
+* **日本电影元数据 抓取工具 | 刮削器**，配合本地影片管理软件EMBY,KODI，PLEX等管理本地影片，该软件起到分类与元数据抓取作用，利用元数据信息来分类，供本地影片分类整理使用。<br>
+* 可**批量抓取**，也可**单个抓取**。可抓取**多集视频**（-cd1/-cd2）,带**字幕**作品（-c., -C.）。<br>
+* 可抓取**子目录下视频**：遍历**视频目录及子目录**（除指定的**排除目录**），对遍历到的所有视频进行刮削，成功则同**元数据、封面图**一起输出到**JAV_output**目录，失败移入**failed**目录。
+* 目前可抓取网站：**javbus,javdb,avsox,fc2club,dmm,mgstage**。<br>
+* 批量添加Emby演员头像。<br>
+
+# 2.反馈
+* 欢迎使用体验,有**程序BUG问题（带截图提问）、功能建议**,可进**电报群**反馈    [点击进群](https://t.me/joinchat/J54y1g3-a7nxJ_-WS4-KFQ)<br>
+
+# 3.常见番号命名规范
+**刮削前尽量命名规范！！！！**
+**不区分大小写**<br>
+
+### 1、标准有码
+* **Javdb、Javbus**:SSNI-111
+* **Dmm**：ssni00111
+### 2、无码
+* **Javdb、Javbus、Avsox**:111111-1111、111111_111、HEYZO-1111、n1111
+### 3、素人
+* **Mgstage**:259LUXU-1111
+* **Javdb**:LUXU-1111
+* **Fc2club**:FC2-111111、FC2-PPV-111111
+### 4、欧美
+* **Javdb、Javbus**:sexart.11.11.11(系列.年.月.日)
+### 5、自带字幕影片
+可以把电影命名为类似**ssni-xxx-c.mp4,ssni-xxx-C.mp4，abp-xxx-CD1-C.mp4**的规则。
+### 6、多集影片
+可以把多集电影按照集数后缀命名为类似**ssni-xxx-cd1.mp4,ssni-xxx-cd2.mp4，abp-xxx-CD1-C.mp4**的规则，只要含有```-CDn/-cdn```类似命名规则，即可使用分集功能.**不支持-A -B -1 -2,容易跟字幕的-C混淆**.
+### 7、多集、字幕顺序
+**abp-xxx-CD1-C.mp4**，**分集在前，字幕在后，字幕必须与拓展名靠近，-C.mp4**.
+### 8、外挂字幕文件
+**字幕文件名**必须与**影片文件名**一致，才可以一起移动到新目录，目前支持**srt ass sub**类型的字幕文件。
+
+# 4.效果图
+## 4.1.界面截图
+**主界面，设置，工具，关于**
+
+<div align="center">
+<img src="https://github.com/moyy996/AVDC/blob/master/readme/main_window.png" height="300">
+<img src="https://github.com/moyy996/AVDC/blob/master/readme/setting.gif" height="300">
+</div>
+<div align="center">
+<img src="https://github.com/moyy996/AVDC/blob/master/readme/tool.png" height="300">
+<img src="https://github.com/moyy996/AVDC/blob/master/readme/about.png" height="300">
+</div>
+
+## 4.2.**查看成功番号的信息(GIF演示)**
+<div>
+<img src="https://github.com/moyy996/AVDC/blob/master/readme/主页面.gif" height="500">
+</div>
+
+
+## 4.3.**文件结构**<br>
+
+<div>
+<img src="https://github.com/moyy996/AVDC/blob/master/readme/tree-jav-output.png" height="700">
+</div>
+
+## 4.4.媒体库
+**以下为刮削、导入后的EMBY**<br>
+
+<div>
+<img src="https://github.com/moyy996/AVDC/blob/master/readme/emby.png" height="400">
+<img src="https://github.com/moyy996/AVDC/blob/master/readme/emby_each.png" height="400">
+</div>
+
+# 5.如何使用
+## 5.1.下载
+* **Release** 的程序可脱离**python环境**运行，源码包需要 [安装模块](#53模块安装)<br>
+* **Release** 下载地址(**仅限Windows**): [点击下载](https://github.com/moyy996/AVDC/releases)<br>
+* **源码包** 下载地址(**Windows,Linux,MacOS**): [点击下载](https://github.com/moyy996/AVDC/archive/master.zip)<br>
+
+* Windows Python环境: [点击前往](https://www.python.org/downloads/windows/) 选中executable installer下载
+* MacOS Python环境： [点击前往](https://www.python.org/downloads/mac-osx/)
+* Linux Python环境：Linux用户懂的吧，不解释下载地址
+
+## 5.2.简要教程:<br>
+* **(1).运行AVDC.exe/AVDC_Main.py，配置设置页各项（配置方法请看以下[教程](54配置设置)）**<br>
+* **(2).把视频所在目录填在设置->目录设置->视频目录。**<br>
+* **(3).在主页面点击开始等待完成(出错请开调试模式后截图)**<br>
+* **(4).软件会自动把元数据获取成功的电影移动到```成功输出目录```中，根据演员分类，失败的电影移动到```失败输出目录```中（可选不移动）。**<br>
+* **(5).把JAV_output导入至KODI,EMBY,PLEX中。**<br>
+
+## 5.3..模块安装
+如果运行**源码**版，运行前请安装**Python环境**和安装以下**模块**<br>  
+在终端/cmd/Powershell中输入以下代码来安装模块,两种方法任选其一。<br>
+* **5.3.1、批量**从py-require.txt安装<br>
+>pip install -r py-require.txt<br>
+
+* **5.3.2、单个**按需安装<br>
+>pip install requests<br>
+>pip install pyquery<br>
+>pip install lxml<br>
+>pip install Beautifulsoup4<br>
+>pip install pillow<br>
+>pip install pyqt5<br>
+
+## 5.4.配置设置
+**设置界面**
+![](https://github.com/moyy996/AVDC/blob/master/readme/setting.gif)
+
+---
+### 5.4.1.刮削模式/整理模式
+  **1、刮削模式**：通过番号刮削数据，包括元数据、封面图、缩略图、背景图。<br>
+  **2、整理模式**：仅根据女优把电影命名为番号并分类到女优名称的文件夹下。<br>
+
+---
+### 5.4.2.软链接模式：使用此模式，要以```管理员身份```运行。
+  刮削完**不移动视频**，而是在相应目录创建**软链接**（类似于快捷方式），方便PT下载完既想刮削又想继续上传的仓鼠党同志。<br>
+  但是，只能在媒体库展示，**不能在媒体库播放**。<br>
+
+---
+### 5.4.3.调试模式
+  输出番号的**元数据**，包括封面，导演，演员，简介等。
+
+---
+### 5.4.4.排除目录
+  在多层目录刮削时**排除所填目录**。
+  
+---
+### 5.4.5.视频目录
+  要整理的视频的目录，**带盘符的绝对路径**<br>
+  会遍历此目录下的**所有视频**，包括**子目录**中。<br>
+
+---
+### 5.4.6.命名规则
+  **1、目录命名**：存放视频数据的目录名，支持**多层目录**，支持**自定义符号**，例：[actor]/studio/number-【title】。<br>
+  **2、视频标题（媒体库中）**：nfo中的标题命名。例：number-[title]。可以自定义符号。<br>
+  **3、视频标题（本地文件）**：本地视频、图片的命名。例：number-[title]。可以自定义符号。<br>
+  **4、可选项**为title（片名）、actor（演员）、studio（制作商）、director（导演）、release（发售日）、year（发行年份）、number（番号）、runtime（时长）、series（系列）、publisher（发行商）<br>
+
+---
+### 5.4.7.代理设置 
+**(1).代理**<br>
+>proxy=127.0.0.1:1080<br>
+
+* **proxy**行设置本地代理地址和端口，支持Shadowxxxx/X,V2XXX本地代理端口，代理软件开**全局模式**  ,**建议使用日本代理**。 <br>
+* 如果一直报Connect Failed! Please check your Proxy or Network!错误，请检查**端口号**是否正确，或者把**proxy=后面的地址和端口**删除，并开启代理软件**全局模式**，或者重启电脑，代理软件，网卡。<br>
+
+**(2).连接超时重试设置**<br>
+>timeout=10<br>
+
+10为超时重试时间 单位：秒，**可选范围3-10**<br>
+**(3).连接重试次数设置**<br>
+>retry=3<br>
+
+3即为重试次数，**可选范围2-5**<br>
+
+---
+### 5.4.8.媒体库选择 
+如果是PLEX，请安装插件：[**XBMCnfoMoviesImporter**](https://github.com/gboudreau/XBMCnfoMoviesImporter.bundle)
+
+---
+### 5.4.9.排除指定字符和目录，字符串
+**1、排除字符**:指定字符删除，例如```排除字符： \()```，删除创建文件夹时的```\()```字符  <br>
+**2、排除目录**:指定目录，例如```排除目录： failed,JAV_output```，多目录刮削时跳过failed,JAV_output  <br>
+**3、排除字符串**:提取番号时，先删除指定字符串，提高成功率，字符串之间用','隔开。<br>
+
+---
+### 5.4.10.网站选择
+可以使用**所有网站**，或者指定网站（**avsox,javbus,dmm,javdb,fc2club，mgstage**）进行刮削。<br>
+**仅使用javdb进行刮削**，尽量不要用，刮削30左右会被JAVDB封IP一段时间。<br>
+
+---
+### 5.4.11.保存日志
+开启后日志保存在程序目录的**Log**目录下的**txt文件**内，每次运行会产生一个txt文件，**txt文件可以删除**，不影响程序运行。<br>
+
+---
+### 5.4.12.失败后移动文件
+如果刮削不到影片信息，可选择不移动视频，或者自动移动到```失败输出目录```中。<br>
+
+---
+### 5.4.13.字幕、视频类型
+  程序搜索不到想要的文件类型，可自行按格式添加。
+  
+---
+# 6.工具
+**工具界面**
+![](https://github.com/moyy996/AVDC/blob/master/readme/tool.png)
+**1、视频移动**：可将**‘视频目录’**下除排除目录下的所有视频以及同名字幕，移动到**‘视频目录’**下的**Movie_moved**目录下。<br><br>
+**2、单文件刮削**：偶尔有失败情况时，选择这个视频文件，使用文件名当番号进行刮削。<br>
+**建议**的使用流程：到某网站找到这个番号,把番号改成网站上的规范番号,选用对应的网站刮削。<br>
+**条件**：文件名至少与一个网站上的番号相同，没有多余的内容只有番号为最佳，可以让软件更好获取元数据。<br>
+对于多影片重命名，可以用[ReNamer](http://www.den4b.com/products/renamer)来批量重命名<br><br>
+**3、Emby批量添加头像**：头像文件放在程序所在目录的Actor目录下，填写emby网址、api密钥即可使用。[头像包下载](https://github.com/moyy996/AVDC/releases/tag/%E5%A4%B4%E5%83%8F%E5%8C%85-2)<br>
+可查看有头像，无头像女优，可往emby添加头像的女优。<br><br>
+**4、裁剪封面**：针对封面图比例错误，分辨率低的情况，判断人脸位置，裁剪缩略图为封面图。<br><br>
+
+# 7.异常处理（重要）
+
+---
+## 7.1.关于软件打不开
+* 请确保软件是完整的！，**AVDC.exe，ACDV-ico.png,config.ini**需要在同一目录下，确保ini文件内容是和下载提供ini文件内容的一致的！<br>
+
+---
+## 7.2.关于软件闪退
+* 尝试**重新运行**<br>
+* 还解决不了，查看**log**日志，尝试以下**7.3、7.4**解决<br>
+
+---
+## 7.3.网络错误
+##### * (1).报```Connect Failed! Please check your Proxy or Network!```错误<br>
+##### * (2).报```Updata_check``` 和 ```JSON``` 相关的错误<br>
+##### * (3).关于```Nonetype,xpath```报错<br>
+##### * (4).关于```KeyError```报错<br>
+* 上述错误都可能是**代理问题**，尝试以下办法解决:
+    * 如不是日本代理，**请更换日本代理**，确保可以打开[这个网址](https://www.dmm.co.jp/mono/dvd/-/detail/=/cid=ssni518/?dmmref=aMonoDvd_List/)<br>
+    * 把代理设置中的**代理：后面的地址和端口删除**<br>
+    * 开启代理软件**全局模式**<br>
+
+---
+## 7.4.关于番号提取失败或者异常
+* 查看命名是否符合[常见番号命名规范](#3常见番号命名规范)。<br>
+* 目前可以提取信息的网址:**JAVBUS、JAVDB、AVSOX、dmm、FC2CLUB、mgstage**，请确保视频名能在这些网站找到<br>
+* 使用**工具页里的单个视频刮削**，选择**刮削网站**，进行刮削。<br>
+
+
+# 8.关于群晖NAS
+开启SMB在Windows上映射为本地磁盘(要分配盘符)即可使用本软件，也适用于其他NAS
+
+# 9.FAQ
+## 9.1.这软件能下片吗？
+* 该软件不提供任何影片下载地址，仅供本地影片分类整理使用。
+## 9.2.什么是元数据？
+* 元数据包括了影片的：封面，导演，演员，简介，类型......
+## 9.3.软件收费吗？
+* 软件永久免费。**除了作者钦点以外**
+## 9.4.软件运行异常怎么办？
+* 认真看 [异常处理（重要）](#7异常处理重要)
+
+# 10.故事
+[点击跳转至原作者博客文章](https://yoshiko2.github.io/2019/10/18/AVDC/)
+
+# 11.声明
+* 本软件仅供**技术交流，学术交流**使用<br>
+* 本软件作者编写出该软件旨在学习Python3，提高编程水平<br>
+* 用户在使用该软件前，请用户自觉遵守当地法律法规，如果该软件使用过程中存在违反当地法律法规的行为，请勿使用该软件<br>
+* 用户使用该软件时，若产生一切违法行为由用户承担<br>
+* 严禁用户使用于商业和个人其他意图<br>
+* 本软件作者保留最终决定权和最终解释权<br>
+**若用户不同意上述条款任意一条，请勿使用该软件**<br>
+
+# 12.写在后面
+怎么样，看着自己的日本电影被这样完美地管理，是不是感觉成就感爆棚呢?<br>
 
 
 
