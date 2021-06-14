@@ -92,62 +92,90 @@ def getOutline(detail_page):
     return str(detail_page.xpath('/html/body/div[2]/div[1]/div[1]/div[2]/div[3]/div/text()')).strip(" ['']")
 
 
-def main(number, appoint_url='', isuncensored=False):
+def main(number, appoint_url='', log_info='', isuncensored=False):
+    log_info += '   >>> JAV321-开始使用 jav321 进行刮削\n'
+    real_url = appoint_url
+    title = ''
+    cover_url = ''
+    cover_small = ''
+    error_type = ''
+    error_info = ''
     try:
         result_url = "https://www.jav321.com/search"
         if appoint_url != '':
             result_url = appoint_url
-        response = post_html(result_url, query={"sn": number})
-        if str(response) == 'ProxyError':
-            raise TimeoutError
+        result, response = post_html(result_url, query={"sn": number})
+        if result == 'error':
+            log_info += '   >>> JAV321-请求详情页：错误！信息：' + response
+            error_type = 'timeout'
+            raise Exception('>>> JAV321-请求详情页：错误！信息' + response)
         if '未找到您要找的AV' in response:
-            raise Exception('Movie Data not found in jav321!')
+            log_info += '   >>> JAV321-未匹配到番号！ \n'
+            error_type = 'Movie not found'
+            raise Exception('Movie not found')
         detail_page = etree.fromstring(response, etree.HTMLParser())
+        title = getTitle(response) # 获取标题
+        if not title:
+            log_info += '   >>> JAV321- title 获取失败！ \n'
+            error_type = 'need login'
+            raise Exception('>>> JAV321- title 获取失败！]')
+        cover_url = getCover(detail_page) # 获取cover
+        if 'http' not in cover_url:
+            log_info += '   >>> JAV321- cover url 获取失败！ \n'
+            error_type = 'Cover Url is None!'
+            raise Exception('>>> JAV321- cover url 获取失败！]')
         release = getRelease(response)
         actor = getActor(response)
         imagecut = 1
         cover_small = ''
-        cover = getCover(detail_page)
         cover_small = getCoverSmall(detail_page)
         if 'HEYZO' in number.upper() or isuncensored:
             imagecut = 3
             if cover_small == '':
                 imagecut = 0
-        if not cover:
-            cover = cover_small
-        
-        dic = {
-            'actor': actor,
-            'title': getTitle(response),
-            'studio': getStudio(response),
-            'outline': getOutline(detail_page),
-            'runtime': getRuntime(response),
-            'release': release,
-            'number': getNum(response),
-            'score': getScore(response),
-            'tag': getTag(response),
-            'series': getSeries(response),
-            'year': getYear(release),
-            'actor_photo': getActorPhoto(actor.split(',')),
-            'cover': cover,
-            'extrafanart': getExtraFanart(detail_page),
-            'cover_small': cover_small,
-            'imagecut': imagecut,
-            'director': '',
-            'publisher': '',
-            'website': getWebsite(detail_page),
-            'source': 'jav321.com',
-        }
-    except TimeoutError:
-        dic = {
-            'title': '',
-            'website': 'timeout',
-        }
+        if not cover_url:
+            cover_url = cover_small
+        try:
+            dic = {
+                'actor': actor,
+                'title': str(title),
+                'studio': getStudio(response),
+                'outline': getOutline(detail_page),
+                'runtime': getRuntime(response),
+                'release': str(release),
+                'number': getNum(response),
+                'score': getScore(response),
+                'tag': getTag(response),
+                'series': getSeries(response),
+                'year': getYear(release),
+                'actor_photo': getActorPhoto(actor.split(',')),
+                'cover': str(cover_url),
+                'extrafanart': getExtraFanart(detail_page),
+                'cover_small': str(cover_small),
+                'imagecut': imagecut,
+                'director': '',
+                'publisher': '',
+                'website': getWebsite(detail_page),
+                'source': 'jav321.main',
+                'log_info': str(log_info),
+                'error_type': '',
+                'error_info': str(error_info),
+            }
+            log_info += '   >>> JAV321-数据获取成功！\n'
+            dic['log_info'] = log_info
+        except Exception as error_info:
+            log_info += '   >>> JAV321-生成数据字典：出错！ 错误信息：%s\n' % error_info
+            error_info = error_info
+            raise Exception(log_info)
+
     except Exception as error_info:
-        print('Error in jav321.main : ' + str(error_info))
         dic = {
             'title': '',
-            'website': '',
+            'cover': '',
+            'website': str(real_url).strip('[]'),
+            'log_info': str(log_info),
+            'error_type': str(error_type),
+            'error_info': str(error_info),
         }
     js = json.dumps(dic, ensure_ascii=False, sort_keys=True, indent=4, separators=(',', ':'), )  # .encode('UTF-8')
     return js

@@ -117,61 +117,89 @@ def getScore(htmlcode):
 
 def find_number(number, appoint_url):
     if appoint_url:
-        return appoint_url, get_html(appoint_url)
-    htmlcode = get_html('https://xcity.jp/result_published/?q=' + number.replace('-', ''))
+        return appoint_url, get_html(appoint_url)[1]
+    result, htmlcode = get_html('https://xcity.jp/result_published/?q=' + number.replace('-', ''))
     if '該当する作品はみつかりませんでした' in htmlcode:
-        return 'not found', ''
+        return 'Movie not found', ''
     html = etree.fromstring(htmlcode, etree.HTMLParser())  # //table/tr[1]/td[1]/text()
     counts = len(html.xpath("//div[@id='searchResult']/table[@class='resultList']/tr"))
     if counts >= 2:
         for count in range(2, counts + 1):  # 遍历搜索结果，找到需要的番号
             result_url = 'https://xcity.jp' + html.xpath("//div[@id='searchResult']/table[@class='resultList']/tr[" + str(count) + "]/td[1]/a/@href")[0]
-            detail_page = get_html(result_url)
+            result, detail_page = get_html(result_url)
             detail_page_html = etree.fromstring(detail_page, etree.HTMLParser())
             number_get = str(detail_page_html.xpath("//span[@id='hinban']/text()")[0])
             if number_get.upper() == number.replace('-', '').upper():
                 return result_url, detail_page
-    return 'not found', ''
+    return 'Movie not found', ''
 
 
-def main(number, appoint_url):
+def main(number, appoint_url='', log_info=''):
+    log_info += '   >>> XCITY-开始使用 xcity 进行刮削\n'
+    real_url = appoint_url
+    title = ''
+    cover_url = ''
+    cover_small = ''
+    error_type = ''
+    error_info = ''
+    dic = {}
     try:
         url, detail_page = find_number(number, appoint_url)
-        if url == 'not found':
-            raise Exception('Movie Data not found in xcity!')
+        if url == 'Movie not found':
+            log_info += '   >>> XCITY-未匹配到番号！ \n'
+            error_type = 'Movie not found'
+            raise Exception('Movie not found')
         actor = getActor(detail_page)
         release = getRelease(detail_page)
-        dic = {
-            'title': getTitle(detail_page),
-            'release': release,
-            'year': getYear(release),
-            'actor': actor,
-            'actor_photo': getActorPhoto(actor),
-            'number': getNum(detail_page),
-            'outline': getOutline(detail_page),
-            'director': getDirector(detail_page),
-            'tag': getTag(detail_page),
-            'runtime': getRuntime(detail_page),
-            'studio': getStudio(detail_page),
-            'series': getSeries(detail_page),
-            'cover': getCover(detail_page),
-            'extrafanart': getExtraFanart(detail_page),
-            'imagecut': 1,
-            'score': '',
-            'publisher': '',
-            'website': url,
-            'source': 'xcity.jp',
-        }
-    except TimeoutError:
-        dic = {
-            'title': '',
-            'website': 'timeout',
-        }
+        title = getTitle(detail_page), # 获取标题
+        if not title:
+            log_info += '   >>> XCITY- title 获取失败！ \n'
+            error_type = 'need login'
+            raise Exception('>>> XCITY- title 获取失败！]')
+        cover_url = getCover(detail_page) # 获取cover
+        if 'http' not in cover_url:
+            log_info += '   >>> XCITY- cover url 获取失败！ \n'
+            error_type = 'Cover Url is None!'
+            raise Exception('>>> XCITY- cover url 获取失败！]')
+
+        try:
+            dic = {
+                'title': str(title),
+                'release': release,
+                'year': getYear(release),
+                'actor': actor,
+                'actor_photo': getActorPhoto(actor),
+                'number': getNum(detail_page),
+                'outline': getOutline(detail_page),
+                'director': getDirector(detail_page),
+                'tag': getTag(detail_page),
+                'runtime': getRuntime(detail_page),
+                'studio': getStudio(detail_page),
+                'series': getSeries(detail_page),
+                'cover': str(cover_url),
+                'cover': '',
+                'extrafanart': getExtraFanart(detail_page),
+                'imagecut': 1,
+                'score': '',
+                'publisher': '',
+                'website': url,
+                'source': 'xcity.main',
+            }
+            log_info += '   >>> XCITY-数据获取成功！\n'
+            dic['log_info'] = log_info
+        except Exception as error_info:
+                log_info += '   >>> XCITY-生成数据字典：出错！ 错误信息：%s\n' % error_info
+                error_info = error_info
+                raise Exception(log_info)
+
     except Exception as error_info:
-        print('Error in xcity.main : ' + str(error_info))
         dic = {
             'title': '',
-            'website': '',
+            'cover': '',
+            'website': str(real_url).strip('[]'),
+            'log_info': str(log_info),
+            'error_type': str(error_type),
+            'error_info': str(error_info),
         }
     js = json.dumps(dic, ensure_ascii=False, sort_keys=True, indent=4, separators=(',', ':'))  # .encode('UTF-8')
     return js

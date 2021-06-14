@@ -108,49 +108,83 @@ def getScore(htmlcode):
     return str(re.findall(r'5点満点中 (\S+)点', htmlcode)).strip(" ['']")
 
 
-def main(number, appoint_url):
+def main(number, appoint_url='', log_info=''):
+    log_info += '   >>> MGSTAGE-开始使用 mgstage 进行刮削\n'
+    real_url = appoint_url
+    title = ''
+    cover_url = ''
+    cover_small = ''
+    error_type = ''
+    error_info = ''
+    dic = {}
+
     try:
         number = number.upper()
         url = 'https://www.mgstage.com/product/product_detail/' + str(number) + '/'
         if appoint_url != '':
             url = appoint_url
-        htmlcode = str(get_html(url, cookies={'adc': '1'}))
+        result, htmlcode = str(get_html(url, cookies={'adc': '1'}))
         htmlcode = htmlcode.replace('ahref', 'a href')  # 针对a标签、属性中间未分开
-        if str(htmlcode) == 'ProxyError':
-            raise TimeoutError
+        if result == 'error':
+            log_info += '   >>> MGSTAGE-请求详情页：错误！信息：' + htmlcode
+            error_type = 'timeout'
+            raise Exception('>>> MGSTAGE-请求详情页：错误！信息：' + htmlcode)
+
+        title = getTitle(htmlcode).replace("\\n", '').replace('        ', '').strip(','), # 获取标题
+        if not title:
+            log_info += '   >>> MGSTAGE- title 获取失败！ \n'
+            error_type = 'need login'
+            raise Exception('>>> MGSTAGE- title 获取失败！]')
+        cover_url = getCover(htmlcode).strip(',') # 获取cover
+        if 'http' not in cover_url:
+            log_info += '   >>> MGSTAGE- cover url 获取失败！ \n'
+            error_type = 'Cover Url is None!'
+            raise Exception('>>> MGSTAGE- cover url 获取失败！]')
+
         actor = getActor(htmlcode).replace(' ', '')
         release = getRelease(htmlcode)
-        dic = {
-            'title': getTitle(htmlcode).replace("\\n", '').replace('        ', '').strip(','),
-            'studio': getStudio(htmlcode).strip(','),
-            'publisher': getPublisher(htmlcode).strip(','),
-            'outline': getOutline(htmlcode).replace('\n', '').strip(','),
-            'score': getScore(htmlcode).strip(','),
-            'runtime': getRuntime(htmlcode).strip(','),
-            'actor': actor.strip(','),
-            'release': release.strip(',').replace('/', '-'),
-            'number': getNum(htmlcode).strip(','),
-            'cover': getCover(htmlcode).strip(','),
-            'extrafanart': getExtraFanart(htmlcode),
-            'imagecut': 0,
-            'tag': getTag(htmlcode).strip(','),
-            'series': getSeries(htmlcode).strip(','),
-            'year': getYear(release).strip(','),
-            'actor_photo': getActorPhoto(actor.split(',')),
-            'director': '',
-            'website': url,
-            'source': 'mgstage.com',
-        }
-    except TimeoutError:
-        dic = {
-            'title': '',
-            'website': 'timeout',
-        }
+        try:
+            dic = {
+                'title': str(title),
+                'studio': getStudio(htmlcode).strip(','),
+                'publisher': getPublisher(htmlcode).strip(','),
+                'outline': getOutline(htmlcode).replace('\n', '').strip(','),
+                'score': getScore(htmlcode).strip(','),
+                'runtime': getRuntime(htmlcode).strip(','),
+                'actor': actor.strip(','),
+                'release': release.strip(',').replace('/', '-'),
+                'number': getNum(htmlcode).strip(','),
+                'cover': str(cover_url),
+                'cover_small': '',
+                'extrafanart': getExtraFanart(htmlcode),
+                'imagecut': 0,
+                'tag': getTag(htmlcode).strip(','),
+                'series': getSeries(htmlcode).strip(','),
+                'year': getYear(release).strip(','),
+                'actor_photo': getActorPhoto(actor.split(',')),
+                'director': '',
+                'website': url,
+                'source': 'mgstage.main',
+                'log_info': str(log_info),
+                'error_type': '',
+                'error_info': str(error_info),
+            }
+
+            log_info += '   >>> MGSTAGE-数据获取成功！\n'
+            dic['log_info'] = log_info
+        except Exception as error_info:
+                log_info += '   >>> MGSTAGE-生成数据字典：出错！ 错误信息：%s\n' % error_info
+                error_info = error_info
+                raise Exception(log_info)
+
     except Exception as error_info:
-        print('Error in mgstage.main : ' + str(error_info))
         dic = {
             'title': '',
-            'website': '',
+            'cover': '',
+            'website': str(real_url).strip('[]'),
+            'log_info': str(log_info),
+            'error_type': str(error_type),
+            'error_info': str(error_info),
         }
     js = json.dumps(dic, ensure_ascii=False, sort_keys=True, indent=4, separators=(',', ':'), )  # .encode('UTF-8')
     return js

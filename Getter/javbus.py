@@ -3,6 +3,8 @@ from pyquery import PyQuery as pq
 from lxml import etree
 from bs4 import BeautifulSoup
 import json
+
+from pyquery.openers import url_opener
 from Function.getHtml import get_html
 from Function.getHtml import post_html
 
@@ -14,8 +16,9 @@ def getActorPhoto(htmlcode):
     for i in a:
         l = i.a['href']
         t = i.get_text()
-        html = etree.fromstring(get_html(l), etree.HTMLParser())
+        html = etree.fromstring(get_html(l)[1], etree.HTMLParser())
         p = str(html.xpath('//*[@id="waterfall"]/div[1]/div/div[1]/img/@src')).strip(" ['']")
+        p = 'https://www.javbus.com' + p
         p2 = {t: p}
         d.update(p2)
     return d
@@ -23,9 +26,9 @@ def getActorPhoto(htmlcode):
 
 def getTitle(htmlcode):  # 获取标题
     doc = pq(htmlcode)
-    title = str(doc('div.container h3').text())
+    title = doc('div.container h3').text()
     try:
-        title2 = re.sub('n\d+-', '', title)
+        title2 = re.sub('n\d+-', '', title) # 无码 n1111111-
         return title2
     except:
         return title
@@ -52,10 +55,13 @@ def getYear(getRelease):  # 获取年份
 
 
 def getCover(htmlcode):  # 获取封面链接
-    doc = pq(htmlcode)
-    image = doc('a.bigImage')
-    image_url = 'https://javbus.com' + image.attr('href')
-    return image_url
+    html = etree.fromstring(htmlcode, etree.HTMLParser())
+    url = html.xpath('//a[@class="bigImage"]/@href')
+    if url:
+        cover_url = 'https://javbus.com' + str(url[0])
+    else:
+        cover_url = ''
+    return cover_url
 
 
 def getExtraFanart(htmlcode):  # 获取封面链接
@@ -101,7 +107,7 @@ def getOutlineScore(number):  # 获取简介
     outline = ''
     score = ''
     try:
-        response = post_html("https://www.jav321.com/search", query={"sn": number})
+        result, response = post_html("https://www.jav321.com/search", query={"sn": number})
         detail_page = etree.fromstring(response, etree.HTMLParser())
         outline = str(detail_page.xpath('/html/body/div[2]/div[1]/div[1]/div[2]/div[3]/div/text()')).strip(" ['']")
         if re.search(r'<b>评分</b>: <img data-original="/img/(\d+).gif" />', response):
@@ -110,14 +116,14 @@ def getOutlineScore(number):  # 获取简介
         else:
             score = str(re.findall(r'<b>评分</b>: ([^<]+)<br>', response)).strip(" [',']").replace('\'', '')
         if outline == '':
-            dmm_htmlcode = get_html(
+            result, dmm_htmlcode = get_html(
                 "https://www.dmm.co.jp/search/=/searchstr=" + number.replace('-', '') + "/sort=ranking/")
             if 'に一致する商品は見つかりませんでした' not in dmm_htmlcode:
                 dmm_page = etree.fromstring(dmm_htmlcode, etree.HTMLParser())
                 url_detail = str(dmm_page.xpath('//*[@id="list"]/li[1]/div/p[2]/a/@href')).split(',', 1)[0].strip(
                     " ['']")
                 if url_detail != '':
-                    dmm_detail = get_html(url_detail)
+                    result, dmm_detail = get_html(url_detail)
                     html = etree.fromstring(dmm_detail, etree.HTMLParser())
                     outline = str(html.xpath('//*[@class="mg-t0 mg-b20"]/text()')).strip(" ['']").replace('\\n', '').replace('\n', '')
     except Exception as error_info:
@@ -133,7 +139,7 @@ def getSeries(htmlcode):
 
 def getCover_small(number):  # 从avsox获取封面图
     try:
-        htmlcode = get_html('https://avsox.website/cn/search/' + number)
+        result, htmlcode = get_html('https://avsox.website/cn/search/' + number)
         html = etree.fromstring(htmlcode, etree.HTMLParser())
         counts = len(html.xpath("//div[@id='waterfall']/div/a/div"))
         if counts == 0:
@@ -162,7 +168,7 @@ def getTag(htmlcode):  # 获取标签
 def find_number(number):
     # =======================================================================有码搜索
     if not (re.match('^\d{4,}', number) or re.match('n\d{4}', number) or 'HEYZO' in number.upper()):
-        htmlcode = get_html('https://www.javbus.com/search/' + number + '&type=1')
+        result, htmlcode = get_html('https://www.javbus.com/search/' + number + '&type=1')
         html = etree.fromstring(htmlcode, etree.HTMLParser())  # //table/tr[1]/td[1]/text()
         counts = len(html.xpath("//div[@id='waterfall']/div[@id='waterfall']/div"))
         if counts != 0:
@@ -175,11 +181,11 @@ def find_number(number):
                         "//div[@id='waterfall']/div[@id='waterfall']/div[" + str(count) + "]/a[@class='movie-box']/@href")[0]
                     return result_url
     # =======================================================================无码搜索
-    htmlcode = get_html('https://www.javbus.com/uncensored/search/' + number + '&type=1')
+    result, htmlcode = get_html('https://www.javbus.com/uncensored/search/' + number + '&type=1')
     html = etree.fromstring(htmlcode, etree.HTMLParser())  # //table/tr[1]/td[1]/text()
     counts = len(html.xpath("//div[@id='waterfall']/div[@id='waterfall']/div"))
     if counts == 0:
-        return 'not found'
+        return 'Movie not found'
     for count in range(1, counts + 1):  # 遍历搜索结果，找到需要的番号
         number_get = html.xpath("//div[@id='waterfall']/div[@id='waterfall']/div[" + str(count) + "]/a[@class='movie-box']/div[@class='photo-info']/span/date[1]/text()")[0]
         number_get = number_get.upper()
@@ -192,127 +198,211 @@ def find_number(number):
             result_url = html.xpath(
                 "//div[@id='waterfall']/div[@id='waterfall']/div[" + str(count) + "]/a[@class='movie-box']/@href")[0]
             return result_url
-    return 'not found'
+    return 'Movie not found'
 
 
-def main(number, appoint_url):
+def main(number, appoint_url='', log_info=''):
+    log_info += '   >>> JAVBUS-开始使用 javbus 进行刮削\n'
+    real_url = appoint_url
+    title = ''
+    cover_url = ''
+    cover_small = ''
+    error_type = ''
+    error_info = ''
+    dic = {}
+
     try:
         if appoint_url:
             result_url = appoint_url
         else:
             result_url = find_number(number)
-        if result_url == 'not found':
-            raise Exception('Movie Data not found in javbus.main!')
-        htmlcode = get_html(result_url)
-        if str(htmlcode) == 'ProxyError':
-            raise TimeoutError
+        if result_url == 'Movie not found':
+            log_info += '   >>> JAVBUS-搜索结果页匹配番号：未匹配到番号！ \n'
+            error_type = 'Movie not found'
+            raise Exception('Movie not found')
+
+        result, htmlcode = get_html(result_url)
+        if result == 'error':
+            log_info += '   >>> JAVBUS-请求详情页：' + htmlcode
+            error_type = 'timeout'
+            raise Exception('>>> JAVBUS-请求详情页：' + htmlcode)
+
+        title = str(getTitle(htmlcode)).replace(number, '').strip().replace(' ', '-') # 获取标题
+        if not title:
+            log_info += '   >>> JAVBUS- title 获取失败！ \n'
+            error_type = 'need login'
+            raise Exception('>>> JAVBUS- title 获取失败！')
+        cover_url = getCover(htmlcode) # 获取cover
+        if 'http' not in cover_url:
+            log_info += '   >>> JAVBUS- cover url 获取失败！ \n'
+            error_type = 'Cover Url is None!'
+            raise Exception('>>> JAVBUS- cover url 获取失败！')
+        cover_small = getCover_small(number)
         outline, score = getOutlineScore(number)
         number = getNum(htmlcode)
-        dic = {
-            'title': str(getTitle(htmlcode)).replace(number, '').strip().replace(' ', '-'),
-            'studio': getStudio(htmlcode),
-            'publisher': getPublisher(htmlcode),
-            'year': getYear(getRelease(htmlcode)),
-            'outline': outline,
-            'score': score,
-            'runtime': getRuntime(htmlcode).replace('分鐘', '').strip(),
-            'director': getDirector(htmlcode),
-            'actor': getActor(htmlcode),
-            'release': getRelease(htmlcode),
-            'number': number,
-            'cover': getCover(htmlcode),
-            'extrafanart': getExtraFanart(htmlcode),
-            'imagecut': 1,
-            'tag': getTag(htmlcode),
-            'series': getSeries(htmlcode),
-            'actor_photo': getActorPhoto(htmlcode),
-            'website': result_url,
-            'source': 'javbus.com',
-        }
-    except TimeoutError:
-        dic = {
-            'title': '',
-            'website': 'timeout',
-        }
+        try:
+            dic = {
+                'title': str(title),
+                'studio': getStudio(htmlcode),
+                'publisher': getPublisher(htmlcode),
+                'year': getYear(getRelease(htmlcode)),
+                'outline': str(outline),
+                'score': str(score),
+                'runtime': getRuntime(htmlcode).replace('分鐘', '').strip(),
+                'director': getDirector(htmlcode),
+                'actor': getActor(htmlcode),
+                'release': getRelease(htmlcode),
+                'number': number,
+                'cover': str(cover_url),
+                'cover_small': str(cover_small),  # 从avsox获取封面图
+                'extrafanart': getExtraFanart(htmlcode),
+                'imagecut': 1,
+                'tag': getTag(htmlcode),
+                'series': getSeries(htmlcode),
+                'actor_photo': getActorPhoto(htmlcode),
+                'website': str(result_url),
+                'source': 'javbus.main',
+                'log_info': str(log_info),
+                'error_type': '',
+                'error_info': str(error_info),
+            }
+            log_info += '   >>> JAVBUS-数据获取成功！\n'
+            dic['log_info'] = log_info
+        except Exception as error_info:
+            log_info += '   >>> JAVBUS-生成数据字典：出错！ 错误信息：%s \n' % error_info
+            error_info = error_info
+            raise Exception(log_info)        
     except Exception as error_info:
-        print('Error in javbus.main : ' + str(error_info))
         dic = {
             'title': '',
-            'website': '',
+            'cover': '',
+            'website': str(real_url).strip('[]'),
+            'log_info': str(log_info),
+            'error_type': str(error_type),
+            'error_info': str(error_info),
         }
     js = json.dumps(dic, ensure_ascii=False, sort_keys=True, indent=4, separators=(',', ':'), )  # .encode('UTF-8')
     return js
 
 
-def main_uncensored(number, appoint_url):
+def main_uncensored(number, appoint_url='', log_info=''):
+    log_info += '   >>> JAVBUS-开始使用 javbus 进行刮削\n'
+    real_url = appoint_url
+    title = ''
+    cover_url = ''
+    cover_small = ''
+    error_type = ''
+    error_info = ''
+    dic = {}
     try:
         result_url = ''
         if appoint_url == '':
             result_url = find_number(number)
         else:
             result_url = appoint_url
-        if result_url == 'not found':
-            raise Exception('Movie Data not found in javbus.main_uncensored!')
-        htmlcode = get_html(result_url)
-        if str(htmlcode) == 'ProxyError':
-            raise TimeoutError
+        if result_url == 'Movie not found':
+            log_info += '   >>> JAVBUS-搜索结果页匹配番号：未匹配到番号！ \n'
+            error_type = 'Movie not found'
+            raise Exception('Movie not found')
+        result, htmlcode = get_html(result_url)
+        if result == 'error':
+            log_info += '   >>> JAVBUS-请求详情页：' + str(htmlcode)
+            error_type = 'timeout'
+            raise Exception('>>> JAVBUS-请求详情页：' + str(htmlcode))
+
+        title = str(getTitle(htmlcode)).replace(number, '').strip().replace(' ', '-') # 获取标题
+        if not title:
+            log_info += '   >>> JAVBUS- title 获取失败！ \n'
+            error_type = 'need login'
+            raise Exception('>>> JAVBUS- title 获取失败！')
+        cover_url = getCover(htmlcode) # 获取cover
+        if 'http' not in cover_url:
+            log_info += '   >>> JAVBUS- cover url 获取失败！ \n'
+            error_type = 'Cover Url is None!'
+            raise Exception('>>> JAVBUS- cover url 获取失败！')
+        cover_small = getCover_small(number)
+        # if 'http' not in cover_small:
+        #     log_info += '   >>> JAVBUS- cover url 获取失败！\n'
+        #     error_type = 'Cover_small Url is None!'
+        #     raise Exception('>>> JAVBUS- cover_small url 获取失败！')
         number = getNum(htmlcode)
         outline = ''
         score = ''
         if 'HEYZO' in number.upper():
             outline, score = getOutlineScore(number)
-        dic = {
-            'title': getTitle(htmlcode).replace(number, '').strip().replace(' ', '-'),
-            'studio': getStudio(htmlcode),
-            'publisher': '',
-            'year': getYear(getRelease(htmlcode)),
-            'outline': outline,
-            'score': score,
-            'runtime': getRuntime(htmlcode).replace('分鐘', '').strip(),
-            'director': getDirector(htmlcode),
-            'actor': getActor(htmlcode),
-            'release': getRelease(htmlcode),
-            'number': getNum(htmlcode),
-            'cover': getCover(htmlcode),
-            'extrafanart': getExtraFanart(htmlcode),
-            'tag': getTag(htmlcode),
-            'series': getSeries(htmlcode),
-            'imagecut': 3,
-            'cover_small': getCover_small(number),  # 从avsox获取封面图
-            'actor_photo': getActorPhoto(htmlcode),
-            'website': result_url,
-            'source': 'javbus.py',
-        }
-        if dic['cover_small'] == '':
-            dic['imagecut'] = 0
-    except TimeoutError:
-        dic = {
-            'title': '',
-            'website': 'timeout',
-        }
+        try:
+            dic = {
+                'title': str(title),
+                'studio': getStudio(htmlcode),
+                'publisher': '',
+                'year': getYear(getRelease(htmlcode)),
+                'outline': str(outline),
+                'score': str(score),
+                'runtime': getRuntime(htmlcode).replace('分鐘', '').strip(),
+                'director': getDirector(htmlcode),
+                'actor': getActor(htmlcode),
+                'release': getRelease(htmlcode),
+                'number': getNum(htmlcode),
+                'cover': str(cover_url),
+                'extrafanart': getExtraFanart(htmlcode),
+                'tag': getTag(htmlcode),
+                'series': getSeries(htmlcode),
+                'imagecut': 3,
+                'cover_small': str(cover_small),  # 从avsox获取封面图
+                'actor_photo': getActorPhoto(htmlcode),
+                'website': str(result_url),
+                'source': 'javbus.main_uncensored',
+                'log_info': str(log_info),
+                'error_type': '',
+                'error_info': str(error_info),
+            }
+            if dic['cover_small'] == '':
+                dic['imagecut'] = 0
+            log_info += '   >>> JAVBUS-数据获取成功！\n'
+            dic['log_info'] = log_info
+        except Exception as error_info:
+            log_info += '   >>> JAVBUS-生成数据字典：出错！ 错误信息：%s \n' % error_info
+            error_info = error_info
+            raise Exception(log_info)        
     except Exception as error_info:
-        print('Error in javbus.main_uncensored : ' + str(error_info))
         dic = {
             'title': '',
-            'website': '',
+            'cover': '',
+            'website': str(real_url).strip('[]'),
+            'log_info': str(log_info),
+            'error_type': str(error_type),
+            'error_info': str(error_info),
         }
     js = json.dumps(dic, ensure_ascii=False, sort_keys=True, indent=4, separators=(',', ':'), )  # .encode('UTF-8')
     return js
 
 
-def main_us(number, appoint_url):
+def main_us(number, appoint_url='', log_info=''):
+    log_info += '   >>> JAVBUS-开始使用 javbus 进行刮削\n'
+    real_url = appoint_url
+    title = ''
+    cover_url = ''
+    cover_small = ''
+    error_type = ''
+    error_info = ''
+    dic = {}
+
     try:
         result_url = ''
         if appoint_url:
             result_url = appoint_url
         else:
-            htmlcode = get_html('https://www.javbus.one/search/' + number)
-            if str(htmlcode) == 'ProxyError':
-                raise TimeoutError
+            result, htmlcode = get_html('https://www.javbus.one/search/' + number)
+            if result == 'error':
+                log_info += '   >>> JAVBUS-请求搜索页：' + (htmlcode)
+                error_type = 'timeout'
+                raise Exception('>>> JAVBUS-请求搜索页：' + (htmlcode))
             html = etree.fromstring(htmlcode, etree.HTMLParser())  # //table/tr[1]/td[1]/text()
             counts = len(html.xpath("//div[@class='row']/div[@id='waterfall']/div"))
             if counts == 0:
-                raise Exception('Movie Data not found in javbus.main_us!')
+                log_info += '   >>> JAVBUS-搜索结果页匹配番号：未匹配到番号！ \n'
+                error_type = 'Movie not found'
+                raise Exception('Movie not found')
             result_url = ''
             cover_small = ''
             for count in range(1, counts + 1):  # 遍历搜索结果，找到需要的番号
@@ -326,43 +416,70 @@ def main_us(number, appoint_url):
                             count) + "]/a[@class='movie-box']/div[@class='photo-frame']/img[@class='img']/@src")[0]
                     break
             if result_url == '':
-                raise Exception('Movie Data not found in javbus.main_us!')
-        htmlcode = get_html(result_url)
-        if str(htmlcode) == 'ProxyError':
-            raise TimeoutError
+                log_info += '   >>> JAVBUS-搜索结果页匹配番号：未匹配到番号！ \n'
+                error_type = 'Movie not found'
+                raise Exception('Movie not found')
+        result, htmlcode = get_html(result_url)
+        if result == 'error':
+            log_info += '   >>> JAVBUS-请求详情页：' + htmlcode
+            error_type = 'timeout'
+            raise Exception('>>> JAVBUS-请求详情页：' + htmlcode)
+
+        title = str(getTitle(htmlcode)).replace(number, '').strip().replace(' ', '-') # 获取标题
+        if not title:
+            log_info += '   >>> JAVBUS- title 获取失败！ \n'
+            error_type = 'need login'
+            raise Exception('>>> JAVBUS- title 获取失败！')
+        cover_url = getCover(htmlcode) # 获取cover
+        if 'http' not in cover_url:
+            log_info += '   >>> JAVBUS- cover url 获取失败！ \n'
+            error_type = 'Cover Url is None!'
+            raise Exception('>>> JAVBUS- cover url 获取失败！')
+        cover_small = getCover_small(number)
+        # if 'http' not in cover_small:
+        #     log_info += '   >>> JAVBUS- cover_small url 获取失败！\n'
+        #     error_type = 'Cover_small Url is None!'
+        #     raise Exception('>>> JAVBUS- cover_small url 获取失败！')
         number = getNum(htmlcode)
-        dic = {
-            'title': getTitle(htmlcode).replace(number, '').strip(),
-            'studio': getStudio(htmlcode),
-            'year': getYear(getRelease(htmlcode)),
-            'runtime': getRuntime(htmlcode).replace('分鐘', '').strip(),
-            'director': getDirector(htmlcode),
-            'actor': getActor(htmlcode),
-            'release': getRelease(htmlcode),
-            'number': getNum(htmlcode),
-            'tag': getTag(htmlcode),
-            'series': getSeries(htmlcode),
-            'cover': getCover(htmlcode),
-            'extrafanart': getExtraFanart(htmlcode),
-            'cover_small': '',
-            'imagecut': 0,
-            'actor_photo': getActorPhoto(htmlcode),
-            'publisher': '',
-            'outline': '',
-            'score': '',
-            'website': result_url,
-            'source': 'javbus.py',
-        }
-    except TimeoutError:
-        dic = {
-            'title': '',
-            'website': 'timeout',
-        }
+        try:
+            dic = {
+                'title': str(title),
+                'year': getYear(getRelease(htmlcode)),
+                'runtime': getRuntime(htmlcode).replace('分鐘', '').strip(),
+                'director': getDirector(htmlcode),
+                'actor': getActor(htmlcode),
+                'release': getRelease(htmlcode),
+                'number': getNum(htmlcode),
+                'tag': getTag(htmlcode),
+                'series': getSeries(htmlcode),
+                'cover': str(cover_url),
+                'extrafanart': getExtraFanart(htmlcode),
+                'cover_small': str(cover_small),  # 从avsox获取封面图
+                'imagecut': 0,
+                'actor_photo': getActorPhoto(htmlcode),
+                'publisher': '',
+                'outline': '',
+                'score': '',
+                'website': str(result_url),
+                'source': 'javbus.us',
+                'log_info': str(log_info),
+                'error_type': '',
+                'error_info': str(error_info),
+            }
+            log_info += '   >>> JAVBUS-数据获取成功！\n'
+            dic['log_info'] = log_info
+        except Exception as error_info:
+            log_info += '   >>> JAVBUS-生成数据字典：出错！ 错误信息：%s \n' % error_info
+            error_info = error_info
+            raise Exception(log_info)        
     except Exception as error_info:
-        print('Error in javbus.main_us : ' + str(error_info))
         dic = {
             'title': '',
-            'website': '',
+            'cover': '',
+            'website': str(real_url).strip('[]'),
+            'log_info': str(log_info),
+            'error_type': str(error_type),
+            'error_info': str(error_info),
         }
     js = json.dumps(dic, ensure_ascii=False, sort_keys=True, indent=4, separators=(',', ':'), )  # .encode('UTF-8')
     return js
