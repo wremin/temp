@@ -1,21 +1,17 @@
 import requests
 import os
-from configparser import ConfigParser
+from configparser import RawConfigParser
 
 
-# ========================================================================获取config
-def get_config():
-    config_file = ''
-    if os.path.exists('../config.ini'):
-        config_file = '../config.ini'
-    elif os.path.exists('config.ini'):
-        config_file = 'config.ini'
-    config = ConfigParser()
+# ========================================================================获取proxy
+def get_proxy():
+    config_file = 'config.ini'
+    config = RawConfigParser()
     config.read(config_file, encoding='UTF-8')
-    proxy_type = str(config['proxy']['type'])
-    proxy = str(config['proxy']['proxy'])
-    timeout = int(config['proxy']['timeout'])
-    retry_count = int(config['proxy']['retry'])
+    proxy_type = config.get('proxy', 'type')
+    proxy = config.get('proxy', 'proxy')
+    timeout = config.getint('proxy', 'timeout')
+    retry_count = config.getint('proxy', 'retry')
     return proxy_type, proxy, timeout, retry_count
 
 
@@ -31,6 +27,21 @@ def get_proxies(proxy_type, proxy):
     return proxies
 
 
+# ========================================================================获取cookies
+def get_cookies():
+    config_file = 'config.ini'
+    config = RawConfigParser()
+    config.read(config_file, encoding='UTF-8')
+    dic = {}
+    javdb = config.get('Cookies', 'javdb')
+    dmm = config.get('Cookies', 'dmm')
+    dic_javdb = {'javdb':{'Cookie':javdb}}
+    dic_dmm = {'dmm':{'Cookie':dmm}}
+    dic.update(dic_javdb)
+    dic.update(dic_dmm)
+    return dic
+
+
 # ========================================================================网页请求
 def get_html(url, cookies=None):
     proxy_type = ''
@@ -38,9 +49,9 @@ def get_html(url, cookies=None):
     proxy = ''
     timeout = 0
     try:
-        proxy_type, proxy, timeout, retry_count = get_config()
-    except Exception as error_info:
-        print('Error in get_html :' + str(error_info))
+        proxy_type, proxy, timeout, retry_count = get_proxy()
+    except Exception as error_info1:
+        print('Error in get_html1 :' + str(error_info1))
         print('[-]Proxy config error! Please check the config.')
     proxies = get_proxies(proxy_type, proxy)
     i = 0
@@ -51,13 +62,14 @@ def get_html(url, cookies=None):
                               'Chrome/60.0.3100.0 Safari/537.36'}
             getweb = requests.get(str(url), headers=headers, timeout=timeout, proxies=proxies, cookies=cookies)
             getweb.encoding = 'utf-8'
-            return getweb.text
-        except Exception as error_info:
+            return 'ok', getweb.text
+        except Exception as error_info2:
             i += 1
-            print('Error in get_html :' + str(error_info))
+            error_info3 = 'Error in get_html2 :' + str(error_info2)
+            print(error_info3)
             print('[-]Connect retry ' + str(i) + '/' + str(retry_count))
     print('[-]Connect Failed! Please check your Proxy or Network!')
-    return 'ProxyError'
+    return 'error', error_info3
 
 
 def post_html(url: str, query: dict):
@@ -66,7 +78,7 @@ def post_html(url: str, query: dict):
     proxy = ''
     timeout = 0
     try:
-        proxy_type, proxy, timeout, retry_count = get_config()
+        proxy_type, proxy, timeout, retry_count = get_proxy()
     except Exception as error_info:
         print('Error in post_html :' + str(error_info))
         print('[-]Proxy config error! Please check the config.')
@@ -76,9 +88,10 @@ def post_html(url: str, query: dict):
             result = requests.post(url, data=query, proxies=proxies, timeout=timeout)
             result.encoding = 'utf-8'
             result = result.text
-            return result
+            return 'ok', result
         except Exception as error_info:
-            print('Error in post_html :' + str(error_info))
+            error_info = 'Error in post_html :' + str(error_info)
+            print(error_info)
             print("[-]Connect retry {}/{}".format(i + 1, retry_count))
     print("[-]Connect Failed! Please check your Proxy or Network!")
-    return 'ProxyError'
+    return 'error', error_info

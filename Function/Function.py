@@ -1,32 +1,22 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+from logging import log
 from random import randint
 import time
 import re
 import os
 import json
 from PIL import Image
-from configparser import ConfigParser
+from configparser import RawConfigParser
 from Getter import avsox, javbus, javdb, fc2hub, mgstage, dmm, jav321, xcity
-
-
-# ========================================================================获取config
-def get_config():
-    config_file = ''
-    if os.path.exists('../config.ini'):
-        config_file = '../config.ini'
-    elif os.path.exists('config.ini'):
-        config_file = 'config.ini'
-    config = ConfigParser()
-    config.read(config_file, encoding='UTF-8')
-    return config
-
 
 # ========================================================================是否为无码
 def is_uncensored(number):
     if re.match('^\d{4,}', number) or re.match('n\d{4}', number) or 'HEYZO' in number.upper():
         return True
-    config = get_config()
+    config_file = 'config.ini'
+    config = RawConfigParser()
+    config.read(config_file, encoding='UTF-8')
     prefix_list = str(config['uncensored']['uncensored_prefix']).split('|')
     for pre in prefix_list:
         if pre.upper() in number.upper():
@@ -36,7 +26,6 @@ def is_uncensored(number):
 
 # ========================================================================元数据获取失败检测
 def getDataState(json_data):
-    # print(json_data)
     if json_data['title'] == '' or json_data['title'] == 'None' or json_data['title'] == 'null':
         return 0
     else:
@@ -148,26 +137,33 @@ def getDataFromJSON(file_number, config, mode, appoint_url):  # 从JSON返回元
         if isuncensored:
             json_data = json.loads(javbus.main_uncensored(file_number, appoint_url))
             if getDataState(json_data) == 0:
-                json_data = json.loads(javdb.main(file_number, appoint_url, True))
+                log_info = json_data['log_info']
+                json_data = json.loads(javdb.main(file_number, appoint_url, log_info, True))
             if getDataState(json_data) == 0 and 'HEYZO' in file_number.upper():
-                json_data = json.loads(jav321.main(file_number, appoint_url, True))
+                log_info = json_data['log_info']
+                json_data = json.loads(jav321.main(file_number, appoint_url, log_info, True))
             if getDataState(json_data) == 0:
-                json_data = json.loads(avsox.main(file_number, appoint_url))
+                log_info = json_data['log_info']
+                json_data = json.loads(avsox.main(file_number, appoint_url, log_info))
         # =======================================================================259LUXU-1111
         elif re.match('\d+[a-zA-Z]+-\d+', file_number) or 'SIRO' in file_number.upper():
             json_data = json.loads(mgstage.main(file_number, appoint_url))
             file_number = re.search('[a-zA-Z]+-\d+', file_number).group()
             if getDataState(json_data) == 0:
-                json_data = json.loads(jav321.main(file_number, appoint_url))
+                log_info = json_data['log_info']
+                json_data = json.loads(jav321.main(file_number, appoint_url, log_info))
             if getDataState(json_data) == 0:
-                json_data = json.loads(javdb.main(file_number, appoint_url))
+                log_info = json_data['log_info']
+                json_data = json.loads(javdb.main(file_number, appoint_url, log_info))
             if getDataState(json_data) == 0:
-                json_data = json.loads(javbus.main(file_number, appoint_url))
+                log_info = json_data['log_info']
+                json_data = json.loads(javbus.main(file_number, appoint_url, log_info))
         # =======================================================================FC2-111111
         elif 'FC2' in file_number.upper():
             json_data = json.loads(fc2hub.main(re.search('\d{4,}', file_number).group(), appoint_url))
             if getDataState(json_data) == 0:
-                json_data = json.loads(javdb.main(file_number, appoint_url))
+                log_info = json_data['log_info']
+                json_data = json.loads(javdb.main(file_number, appoint_url, log_info))
         # =======================================================================ssni00321
         elif re.match('\D{2,}00\d{3,}', file_number) and '-' not in file_number and '_' not in file_number:
             json_data = json.loads(dmm.main(file_number, appoint_url))
@@ -175,23 +171,31 @@ def getDataFromJSON(file_number, config, mode, appoint_url):  # 从JSON返回元
         elif re.search('\D+\.\d{2}\.\d{2}\.\d{2}', file_number):
             json_data = json.loads(javdb.main_us(file_number, appoint_url))
             if getDataState(json_data) == 0:
-                json_data = json.loads(javbus.main_us(file_number, appoint_url))
+                log_info = json_data['log_info']
+                json_data = json.loads(javbus.main_us(file_number, appoint_url, log_info))
         # =======================================================================MIDE-139
         else:
             json_data = json.loads(javbus.main(file_number, appoint_url))
             if getDataState(json_data) == 0:
-                json_data = json.loads(javdb.main(file_number, appoint_url))
+                log_info = json_data['log_info']
+                json_data = json.loads(javdb.main(file_number, appoint_url, log_info))
             if getDataState(json_data) == 0:
-                json_data = json.loads(jav321.main(file_number, appoint_url))
+                log_info = json_data['log_info']
+                json_data = json.loads(jav321.main(file_number, appoint_url, log_info))
             if getDataState(json_data) == 0:
-                json_data = json.loads(xcity.main(file_number, appoint_url))
+                log_info = json_data['log_info']
+                json_data = json.loads(xcity.main(file_number, appoint_url, log_info))
             if getDataState(json_data) == 0:
-                json_data = json.loads(avsox.main(file_number, appoint_url))
+                log_info = json_data['log_info']
+                json_data = json.loads(avsox.main(file_number, appoint_url, log_info))
     elif re.match('\D{2,}00\d{3,}', file_number) and mode != 6:
         json_data = {
             'title': '',
             'actor': '',
             'website': '',
+            'log_info': '',
+            'error_type': '',
+            'error_info': '',
         }
     elif mode == 2:  # 仅从javbus
         if isuncensored:
@@ -219,16 +223,11 @@ def getDataFromJSON(file_number, config, mode, appoint_url):  # 从JSON返回元
         json_data = json.loads(fc2hub.main(file_number, appoint_url))
 
     # ================================================网站规则添加结束================================================
-    # print(json_data)
-    # ======================================超时或未找到
-    if json_data['website'] == 'timeout':
+
+    # ======================================超时或未找到返回
+    if json_data['error_type'] or json_data['title'] == '':
         return json_data
-    elif json_data['website'] == 'SearchCloudFlare':
-        return json_data
-    elif json_data['website'] == 'DetailCloudFlare':
-        return json_data
-    elif json_data['title'] == '':
-        return json_data
+
     # ======================================处理得到的信息
     title = json_data['title']
     number = json_data['number']
@@ -263,11 +262,13 @@ def getDataFromJSON(file_number, config, mode, appoint_url):  # 从JSON返回元
     for key, value in json_data.items():
         if key == 'title' or key == 'studio' or key == 'director' or key == 'series' or key == 'publisher':
             json_data[key] = str(value).replace('/', '')
-    # ====================处理异常字符 END================== #\/:*?"<>|
 
-    naming_media = config['Name_Rule']['naming_media']
-    naming_file = config['Name_Rule']['naming_file']
-    folder_name = config['Name_Rule']['folder_name']
+    naming_media = config.get('Name_Rule', 'naming_media')
+    naming_file = config.get('Name_Rule', 'naming_file')
+    folder_name = config.get('Name_Rule', 'folder_name')
+    # naming_media = config['Name_Rule']['naming_media']
+    # naming_file = config['Name_Rule']['naming_file']
+    # folder_name = config['Name_Rule']['folder_name']
 
     # 返回处理后的json_data
     json_data['title'] = title
@@ -284,7 +285,7 @@ def getDataFromJSON(file_number, config, mode, appoint_url):  # 从JSON返回元
 
 # ========================================================================返回json里的数据
 def get_info(json_data):
-    for key, value in json_data.items():
+    for key, value in json_data.items():    # 这一步去掉就不显示信息，不太好看
         if value == '' or value == 'N/A':
             json_data[key] = 'unknown'
     title = json_data['title']
@@ -310,16 +311,14 @@ def save_config(json_config):
     # json_config = json.loads(json_config)
     config_file = 'config.ini'
     with open(config_file, "wt", encoding='UTF-8') as code:
-        print("# modified time: " + time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime()) + "\n", file=code)
+        print("# modified time: " + time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + "\n", file=code)
         print("[common]", file=code)
         print("main_mode = " + str(json_config['main_mode']), file=code)
-        print("failed_output_folder = " + json_config['failed_output_folder'], file=code)
-        print("success_output_folder = " + json_config['success_output_folder'], file=code)
         print("failed_file_move = " + str(json_config['failed_file_move']), file=code)
         print("soft_link = " + str(json_config['soft_link']), file=code)
         print("show_poster = " + str(json_config['show_poster']), file=code)
         print("website = " + json_config['website'], file=code)
-        print("# all or mgstage or fc2hub or javbus or jav321 or javdb or avsox or xcity or dmm", file=code)
+        print("# all or javbus or javdb or jav321 or dmm or avsox or xcity or mgstage or fc2hub", file=code)
         print("", file=code)
         print("[proxy]", file=code)
         print("type = " + json_config['type'], file=code)
@@ -327,6 +326,11 @@ def save_config(json_config):
         print("timeout = " + str(json_config['timeout']), file=code)
         print("retry = " + str(json_config['retry']), file=code)
         print("# type: no, http, socks5", file=code)
+        print("", file=code)
+        print("[Cookies]", file=code)
+        print("javdb = " + json_config['javdb'], file=code)
+        print("dmm = " + json_config['dmm'], file=code)
+        print("# cookies存在有效期，记得更新", file=code)
         print("", file=code)
         print("[Name_Rule]", file=code)
         print("folder_name = " + json_config['folder_name'], file=code)
@@ -341,9 +345,11 @@ def save_config(json_config):
         print("save_log = " + str(json_config['save_log']), file=code)
         print("", file=code)
         print("[media]", file=code)
+        print("media_path = " + json_config['media_path'], file=code)
         print("media_type = " + json_config['media_type'], file=code)
         print("sub_type = " + json_config['sub_type'], file=code)
-        print("media_path = " + json_config['media_path'], file=code)
+        print("failed_output_folder = " + json_config['failed_output_folder'], file=code)
+        print("success_output_folder = " + json_config['success_output_folder'], file=code)
         print("", file=code)
         print("[escape]", file=code)
         print("literals = " + json_config['literals'], file=code)
@@ -392,3 +398,4 @@ def check_pic(path_pic):
     except (FileNotFoundError, OSError):
         # print('文件损坏')
         return False
+
